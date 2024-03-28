@@ -1,0 +1,27 @@
+[
+    {
+        "path": "/sys/class/power_supply/battery/input_suspend",
+        "suspend": 1,
+        "resume": 0
+    },
+    {
+        "path": "/sys/class/power_supply/battery/charging_enabled",
+        "suspend": 0,
+        "resume": 1
+    },
+    {
+        "path": "/sys/class/power_supply/BAT0/charge_control_end_threshold",
+        "suspend": -1,
+        "resume": -1
+    },
+    {
+        "path": "/tmp/input_limit",
+        "suspend": -1,
+        "resume": -1
+    },
+    {
+        "path": "/tmp/input_suspend",
+        "suspend": 1,
+        "resume": 0
+    }
+]

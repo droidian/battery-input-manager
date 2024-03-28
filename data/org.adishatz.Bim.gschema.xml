@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="bim">
+  <schema id="org.adishatz.Bim" path="/org/adishatz/Bim/">
+
+    <key name="sysfs-suspend-input-path" type="s">
+      <default>''</default>
+      <summary>Path to sysfs suspend node</summary>
+      <description>The path to the sysfs node disabling input.</description>
+    </key>
+
+    <key name="sysfs-suspend-input-value" type="i">
+      <default>1</default>
+      <summary>sysfs node value when input is suspended</summary>
+      <description>These value of sysfs node when input is suspended.</description>
+    </key>
+
+    <key name="sysfs-resume-input-value" type="i">
+      <default>0</default>
+      <summary>sysfs node value when input is resumed</summary>
+      <description>These value of sysfs node when input is resumed.</description>
+    </key>
+  </schema>
+</schemalist>

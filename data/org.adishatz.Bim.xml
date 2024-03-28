@@ -1,0 +1,33 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<node>
+  <!--
+      org.adishatz.Bim:
+      @short_description: Bim daemon
+
+      The bim daemon API is meant to be used by application to add alarms
+      allowing daemon to handle input suspend in a smart way.
+      The object path will be "/org/adishatz/Bim".
+  -->
+  <interface name='org.adishatz.Bim'>
+      <!--
+        AddAlarm:
+
+        Add an alarm for timestamp
+      -->
+      <method name='AddAlarm'>
+        <arg direction='in' name='app_id' type='s'/>
+        <arg direction='in' name='timestamp_utc' type='t'/>
+      </method>
+      <!--
+        RemoveAlarm:
+
+        Remove alarm for timestamp
+      -->
+      <method name='RemoveAlarm'>
+        <arg direction='in' name='app_id' type='s'/>
+        <arg direction='in' name='timestamp_utc' type='t'/>
+      </method>
+   </interface>
+</node>
