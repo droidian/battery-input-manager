@@ -29,5 +29,14 @@
         <arg direction='in' name='app_id' type='s'/>
         <arg direction='in' name='timestamp_utc' type='t'/>
       </method>
+      <!--
+        Set:
+
+        Set setting to value
+      -->
+      <method name='Set'>
+        <arg direction='in' name='setting' type='s'/>
+        <arg direction='in' name='value' type='v'/>
+      </method>
    </interface>
 </node>

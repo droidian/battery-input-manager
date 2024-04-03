@@ -17,6 +17,7 @@ enum
 {
     ALARM_ADDED,
     ALARM_REMOVED,
+    SETTING_CHANGED,
     LAST_SIGNAL
 };
 
@@ -98,6 +99,17 @@ handle_method_call (GDBusConnection *connection,
             invocation, NULL
         );
         g_signal_emit(self, signals[ALARM_REMOVED], 0);
+
+    } else if (g_strcmp0 (method_name, "Set") == 0) {
+        const gchar* setting;
+        GVariant *value;
+
+        g_variant_get (parameters, "(&sv)", &setting, &value);
+        g_signal_emit(self, signals[SETTING_CHANGED], 0, setting, value);
+
+        g_dbus_method_invocation_return_value (
+            invocation, NULL
+        );
     }
 }
 
@@ -151,8 +163,6 @@ bim_bus_set_property (GObject *object,
                         const GValue *value,
                         GParamSpec *pspec)
 {
-    BimBus *self = BIM_BUS (object);
-
     switch (property_id) {
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -166,8 +176,6 @@ bim_bus_get_property (GObject *object,
                       GValue *value,
                       GParamSpec *pspec)
 {
-    BimBus *self = BIM_BUS (object);
-
     switch (property_id) {
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -209,7 +217,8 @@ bim_bus_class_init (BimBusClass *klass)
         0,
         NULL, NULL, NULL,
         G_TYPE_NONE,
-        0);
+        0
+    );
 
     signals[ALARM_REMOVED] = g_signal_new (
         "alarm-removed",
@@ -218,7 +227,21 @@ bim_bus_class_init (BimBusClass *klass)
         0,
         NULL, NULL, NULL,
         G_TYPE_NONE,
-        0);
+        0
+    );
+
+    signals[SETTING_CHANGED] = g_signal_new (
+        "setting-changed",
+        G_OBJECT_CLASS_TYPE (object_class),
+        G_SIGNAL_RUN_LAST,
+        0,
+        NULL, NULL, NULL,
+        G_TYPE_NONE,
+        2,
+        G_TYPE_STRING,
+        G_TYPE_VARIANT
+    );
+
 }
 
 static void

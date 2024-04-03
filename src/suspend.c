@@ -27,7 +27,7 @@
 #define SIMULATE_CYCLE_FULL  14
 #define SIMULATE_CYCLE_ALARM 15
 #define SIMULATE_CYCLE_START 70
-#define SIMULATE_CYCLE_TIMEOUT 100
+#define SIMULATE_CYCLE_TIMEOUT 500
 
 
 enum {
@@ -38,9 +38,17 @@ enum {
 
 struct _SuspendPrivate {
     GDBusProxy *upower_proxy;
+
+    gint threshold_min;
+    gint threshold_max;
+    gint threshold_start;
+    gint threshold_end;
+
     guint64 next_alarm;
     guint64 time_to_full;
+
     gdouble percentage;
+
     gboolean suspended;
     gboolean cycle_running;
     gboolean simulate;
@@ -122,23 +130,23 @@ handle_input (Suspend *self) {
 
         } else if (self->priv->next_alarm == 0 &&
                   !self->priv->cycle_running &&
-                   self->priv->percentage <= INPUT_THRESHOLD_START) {
+                   self->priv->percentage <= self->priv->threshold_start) {
             g_debug ("handle_input: INPUT_THRESHOLD_START");
             resume_input (self);
 
-        } else if (self->priv->percentage < INPUT_THRESHOLD_MIN) {
+        } else if (self->priv->percentage < self->priv->threshold_min) {
             g_debug ("handle_input: INPUT_THRESHOLD_MIN");
             self->priv->cycle_running = FALSE;
             resume_input (self);
         }
     } else {
         if (!self->priv->cycle_running &&
-               self->priv->percentage >= INPUT_THRESHOLD_END) {
+               self->priv->percentage >= self->priv->threshold_end) {
             g_debug ("handle_input: INPUT_THRESHOLD_END");
             self->priv->cycle_running = TRUE;
             suspend_input (self);
 
-        } else if (self->priv->percentage == INPUT_THRESHOLD_MAX) {
+        } else if (self->priv->percentage == self->priv->threshold_max) {
             g_debug ("handle_input: INPUT_THRESHOLD_MAX");
             suspend_input (self);
         }
@@ -153,6 +161,25 @@ on_alarm_updated (BimBus  *bim_bus,
 
     self->priv->next_alarm = bim_bus_get_next_alarm (bim_bus);
     handle_input (user_data);
+}
+
+
+static void
+on_setting_changed (BimBus   *bim_bus,
+                    gchar    *setting,
+                    GVariant *variant,
+                    gpointer  user_data) {
+    Suspend *self = SUSPEND (user_data);
+
+    g_warning ("%s\n", setting);
+    if (g_strcmp0 (setting, "threshold-max") == 0)
+        self->priv->threshold_max = g_variant_get_int32(variant);
+    else if (g_strcmp0 (setting, "threshold-min") == 0)
+        self->priv->threshold_min = g_variant_get_int32(variant);
+    else if (g_strcmp0 (setting, "threshold-start") == 0)
+        self->priv->threshold_start = g_variant_get_int32(variant);
+    else if (g_strcmp0 (setting, "threshold-end") == 0)
+        self->priv->threshold_end = g_variant_get_int32(variant);
 }
 
 
@@ -207,7 +234,7 @@ simulate_charging_cycle (Suspend *self) {
         self->priv->time_to_full = SIMULATE_CYCLE_FULL;
         g_debug ("next_alarm: %ld", self->priv->next_alarm);
 
-    } else if (self->priv->percentage == INPUT_THRESHOLD_MAX) {
+    } else if (self->priv->percentage >= INPUT_THRESHOLD_MAX) {
         self->priv->next_alarm = 0;
         self->priv->time_to_full = 0;
     }
@@ -364,8 +391,14 @@ suspend_init (Suspend *self)
     
     self->priv->suspended = FALSE;
     self->priv->cycle_running = FALSE;
+
     self->priv->next_alarm = 0;
     self->priv->time_to_full = 0;
+
+    self->priv->threshold_min = INPUT_THRESHOLD_MIN;
+    self->priv->threshold_max = INPUT_THRESHOLD_MAX;
+    self->priv->threshold_start = INPUT_THRESHOLD_START;
+    self->priv->threshold_end = INPUT_THRESHOLD_END;
 
     g_signal_connect (
         bim_bus_get_default (),
@@ -378,6 +411,13 @@ suspend_init (Suspend *self)
         bim_bus_get_default (),
         "alarm-removed",
         G_CALLBACK (on_alarm_updated),
+        self
+    );
+
+    g_signal_connect (
+        bim_bus_get_default (),
+        "setting-changed",
+        G_CALLBACK (on_setting_changed),
         self
     );
 }
