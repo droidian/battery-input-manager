@@ -316,6 +316,7 @@ bim_bus_get_default (void)
     return g_object_ref (default_bim_bus);
 }
 
+
 /**
  * bim_bus_get_next_alarm:
  *

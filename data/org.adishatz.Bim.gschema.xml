@@ -2,22 +2,29 @@
 <schemalist gettext-domain="bim">
   <schema id="org.adishatz.Bim" path="/org/adishatz/Bim/">
 
-    <key name="sysfs-suspend-input-path" type="s">
-      <default>''</default>
-      <summary>Path to sysfs suspend node</summary>
-      <description>The path to the sysfs node disabling input.</description>
+    <key name="threshold-max" type="i">
+      <default>100</default>
+      <summary>Battery maximum threshold</summary>
+      <description>Suspend input at this threshold when an alarm is going to ring.</description>
     </key>
 
-    <key name="sysfs-suspend-input-value" type="i">
-      <default>1</default>
-      <summary>sysfs node value when input is suspended</summary>
-      <description>These value of sysfs node when input is suspended.</description>
+    <key name="threshold-min" type="i">
+      <default>40</default>
+      <summary>Battery minimal threshold</summary>
+      <description>Resume input at this threshold.</description>
     </key>
 
-    <key name="sysfs-resume-input-value" type="i">
-      <default>0</default>
-      <summary>sysfs node value when input is resumed</summary>
-      <description>These value of sysfs node when input is resumed.</description>
+    <key name="threshold-start" type="i">
+      <default>60</default>
+      <summary>Battery start threshold</summary>
+      <description>Resume input at this threshold when waiting for an alarm to ring.</description>
     </key>
+
+    <key name="threshold-end" type="i">
+      <default>80</default>
+      <summary>Battery end threshold</summary>
+      <description>Suspend input at this threshold when waiting for an alarm to ring.</description>
+    </key>
+
   </schema>
 </schemalist>

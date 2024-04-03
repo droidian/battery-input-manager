@@ -21,9 +21,12 @@ devices_json = join_paths(bim_data_dir, 'devices.json')
 dbus_conf_dir = join_paths(data_dir, 'dbus-1/system.d')
 dbus_service_dir = join_paths(data_dir, 'dbus-1/system-services')
 systemd_system_dir = join_paths(get_option('prefix'), 'lib/systemd/system')
+systemd_user_dir = join_paths(get_option('prefix'), 'lib/systemd/user')
+bin_dir = join_paths(get_option('prefix'), get_option('bindir'))
 sbin_dir = join_paths(get_option('prefix'), get_option('sbindir'))
 
 config_h = configuration_data()
+config_h.set('APP_ID', '"org.adishatz.Bim"')
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
 config_h.set('BIM_RESOURCES', '"' + bim_resource + '"')
 config_h.set('DEVICES_JSON', '"' + devices_json + '"')
@@ -102,4 +105,5 @@ endforeach
 add_project_arguments(project_c_args, language: 'c')
 
 subdir('system')
+subdir('user')
 subdir('data')
