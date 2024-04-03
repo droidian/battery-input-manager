@@ -101,5 +101,5 @@ foreach arg: test_c_args
 endforeach
 add_project_arguments(project_c_args, language: 'c')
 
-subdir('src')
+subdir('system')
 subdir('data')
