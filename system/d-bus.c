@@ -102,9 +102,9 @@ handle_method_call (GDBusConnection *connection,
 
     } else if (g_strcmp0 (method_name, "Set") == 0) {
         const gchar* setting;
-        GVariant *value;
+        gint value;
 
-        g_variant_get (parameters, "(&sv)", &setting, &value);
+        g_variant_get (parameters, "(&si)", &setting, &value);
         g_signal_emit(self, signals[SETTING_CHANGED], 0, setting, value);
 
         g_dbus_method_invocation_return_value (
@@ -239,7 +239,7 @@ bim_bus_class_init (BimBusClass *klass)
         G_TYPE_NONE,
         2,
         G_TYPE_STRING,
-        G_TYPE_VARIANT
+        G_TYPE_INT
     );
 
 }

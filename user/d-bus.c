@@ -90,13 +90,13 @@ bim_bus_new (void)
  * @value: a setting value
  */
 void
-bim_bus_set_value (BimBus *self, const gchar *key, gpointer value) {
+bim_bus_set_value (BimBus *self, const gchar *key, gint value) {
     g_autoptr (GError) error = NULL;
 
     g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
         "Set",
-        g_variant_new ("&sv", key, value),
+        g_variant_new ("(&si)", key, value),
         G_DBUS_CALL_FLAGS_NONE,
         -1,
         NULL,

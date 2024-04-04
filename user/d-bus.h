@@ -46,7 +46,7 @@ BimBus     *bim_bus_get_default    (void);
 GObject*    bim_bus_new            (void);
 void        bim_bus_set_value      (BimBus      *self,
                                     const gchar *key,
-                                    gpointer     user_data);
+                                    gint     value);
 
 G_END_DECLS
 

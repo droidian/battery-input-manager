@@ -27,8 +27,11 @@ on_threshold_changed (GSettings   *settings,
                       const gchar *key,
                       gpointer     user_data) {
     BimBus *bim_bus = bim_bus_get_default ();
+    gint value = g_settings_get_int (settings, key);
 
-    bim_bus_set_value (bim_bus, key, user_data);
+    g_message ("Setting changed: %s -> %d", key, value);
+
+    bim_bus_set_value (bim_bus, key, value);
 }
 
 

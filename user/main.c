@@ -9,6 +9,8 @@
 #include <gio/gio.h>
 #include <stdlib.h>
 
+#include "settings.h"
+
 
 gint
 main (gint argc, gchar * argv[])
@@ -34,6 +36,8 @@ main (gint argc, gchar * argv[])
         g_printerr ("%s\n", PACKAGE_VERSION);
         return EXIT_SUCCESS;
     }
+
+    settings_get_default ();
 
     loop = g_main_loop_new (NULL, FALSE);
     g_main_loop_run (loop);

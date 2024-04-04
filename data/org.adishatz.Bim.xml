@@ -36,7 +36,7 @@
       -->
       <method name='Set'>
         <arg direction='in' name='setting' type='s'/>
-        <arg direction='in' name='value' type='v'/>
+        <arg direction='in' name='value' type='i'/>
       </method>
    </interface>
 </node>
