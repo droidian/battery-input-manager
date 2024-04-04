@@ -77,18 +77,6 @@ settings_init (Settings *self)
 
     g_signal_connect (
         self->priv->settings,
-        "changed::threshold-min",
-        G_CALLBACK (on_threshold_changed),
-        self
-    );
-    on_threshold_changed (
-        self->priv->settings,
-        "threshold-min",
-        self
-    );
-
-    g_signal_connect (
-        self->priv->settings,
         "changed::threshold-start",
         G_CALLBACK (on_threshold_changed),
         self

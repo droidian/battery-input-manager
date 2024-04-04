@@ -18,5 +18,3 @@ executable('bim', bim_sources,
   install_dir: sbin_dir,
   install: true,
 )
-
-install_emptydir(bim_var_lib)

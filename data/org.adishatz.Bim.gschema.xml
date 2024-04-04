@@ -8,12 +8,6 @@
       <description>Suspend input at this threshold when an alarm is going to ring.</description>
     </key>
 
-    <key name="threshold-min" type="i">
-      <default>40</default>
-      <summary>Battery minimal threshold</summary>
-      <description>Resume input at this threshold.</description>
-    </key>
-
     <key name="threshold-start" type="i">
       <default>60</default>
       <summary>Battery start threshold</summary>

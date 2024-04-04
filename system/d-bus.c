@@ -40,10 +40,15 @@ static gint
 sort_alarms (gconstpointer a,
              gconstpointer b)
 {
-    gint64 int_a = GPOINTER_TO_INT (a);
-    gint64 int_b = GPOINTER_TO_INT (b);
+    GVariant* va = (GVariant *) a;
+    GVariant* vb = (GVariant *) b;
+    gint64 a_time;
+    gint64 b_time;
 
-    return int_a - int_b;
+    g_variant_get (va, "(&sx)", NULL, &a_time);
+    g_variant_get (vb, "(&sx)", NULL, &b_time);
+
+    return a_time - b_time;
 }
 
 
@@ -61,15 +66,15 @@ handle_method_call (GDBusConnection *connection,
 
     if (g_strcmp0 (method_name, "AddAlarm") == 0) {
         const gchar* app_id;
-        gint64 utime;
+        gint64 time;
 
-        g_variant_get (parameters, "(&sv)", &app_id, &utime);
+        g_variant_get (parameters, "(&sx)", &app_id, &time);
 
-        g_message ("%s adding alarm at %ld", app_id, utime);
+        g_message ("Adding alarm: %ld", time);
 
         self->priv->alarms = g_list_insert_sorted (
             self->priv->alarms,
-            g_variant_new ("v", utime),
+            g_variant_new ("(&sx)", app_id, time),
             sort_alarms
         );
 
@@ -81,14 +86,14 @@ handle_method_call (GDBusConnection *connection,
     } else if (g_strcmp0 (method_name, "RemoveAlarm") == 0) {
         const gchar* app_id;
         GVariant *data;
-        gint64 utime;
+        gint64 time;
 
-        g_variant_get (parameters, "(&sv)", &app_id, &utime);
+        g_variant_get (parameters, "(&sv)", &app_id, &time);
 
         GFOREACH (self->priv->alarms, data) {
-            gint64 _utime = g_variant_get_int64 (data);
-            if (utime == _utime) {
-                g_message ("%s removing alarm at %ld", app_id, utime);
+            gint64 _time = g_variant_get_int64 (data);
+            if (time == _time) {
+                g_message ("%s removing alarm at %ld", app_id, time);
                 self->priv->alarms = g_list_remove (self->priv->alarms, data);
                 g_free (data);
                 break;
@@ -328,11 +333,21 @@ bim_bus_get_default (void)
  */
 gint64
 bim_bus_get_next_alarm (BimBus *self) {
-    gint64 utime = 0;
-    GList *first = g_list_first (self->priv->alarms);
+    gint64 timestamp = 0;
+    GVariant *alarm;
+    g_autoptr(GDateTime) datetime;
+    gint64 current_timestamp;
 
-    if (first != NULL)
-        g_variant_get (first->data, "t", &utime);
+    datetime = g_date_time_new_now_utc ();
+    current_timestamp = g_date_time_to_unix (datetime);
 
-    return utime;
+    GFOREACH (self->priv->alarms, alarm) {
+        g_variant_get (alarm, "(&sx)", NULL, &timestamp);
+        if (timestamp > current_timestamp) {
+            g_message ("Next alarm: %ld", timestamp);
+            return timestamp;
+        }
+    }
+
+    return 0;
 }

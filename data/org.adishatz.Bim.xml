@@ -18,7 +18,7 @@
       -->
       <method name='AddAlarm'>
         <arg direction='in' name='app_id' type='s'/>
-        <arg direction='in' name='timestamp_utc' type='t'/>
+        <arg direction='in' name='timestamp_utc' type='x'/>
       </method>
       <!--
         RemoveAlarm:
@@ -26,8 +26,15 @@
         Remove alarm for timestamp
       -->
       <method name='RemoveAlarm'>
+        <arg direction='in' name='timestamp_utc' type='x'/>
+      </method>
+      <!--
+        RemoveAlarms:
+
+        Remove alarms for app
+      -->
+      <method name='RemoveAlarms'>
         <arg direction='in' name='app_id' type='s'/>
-        <arg direction='in' name='timestamp_utc' type='t'/>
       </method>
       <!--
         Set:

@@ -1,4 +1,5 @@
 bim_sources = [
+  'clocks.c',
   'd-bus.c',
   'main.c',
   'settings.c'

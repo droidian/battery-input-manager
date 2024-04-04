@@ -18,16 +18,21 @@
 #define UPOWER_DBUS_INTERFACE  "org.freedesktop.UPower.Device"
 
 
-#define INPUT_THRESHOLD_MIN   40
 #define INPUT_THRESHOLD_START 60
 #define INPUT_THRESHOLD_END   80
 #define INPUT_THRESHOLD_MAX   100
 
 
-#define SIMULATE_CYCLE_FULL  14
-#define SIMULATE_CYCLE_ALARM 15
 #define SIMULATE_CYCLE_START 70
-#define SIMULATE_CYCLE_TIMEOUT 500
+#define SIMULATE_CYCLE_TIMEOUT 1000
+
+
+enum
+{
+    SUSPEND_NONE       = 1 << 0,
+    SUSPEND_ACTIVE     = 1 << 1,
+    SUSPEND_LOCKED   = 1 << 2
+};
 
 
 enum {
@@ -39,7 +44,6 @@ enum {
 struct _SuspendPrivate {
     GDBusProxy *upower_proxy;
 
-    gint threshold_min;
     gint threshold_max;
     gint threshold_start;
     gint threshold_end;
@@ -49,8 +53,8 @@ struct _SuspendPrivate {
 
     gdouble percentage;
 
-    gboolean suspended;
-    gboolean cycle_running;
+    gint state;
+
     gboolean simulate;
 };
 
@@ -76,7 +80,7 @@ suspend_input (Suspend *self) {
     g_return_if_fail (sysfs != NULL);
 
     g_message ("Suspending input");
-    self->priv->suspended = TRUE;
+    self->priv->state |= SUSPEND_ACTIVE;
     fprintf (sysfs, "%d", settings_get_sysfs_suspend_input_value (settings));
 
     fclose (sysfs);
@@ -96,60 +100,96 @@ resume_input (Suspend *self) {
     g_return_if_fail (sysfs != NULL);
 
     g_message ("Resuming input");
-    self->priv->suspended = FALSE;
+    self->priv->state &= ~SUSPEND_ACTIVE;
     fprintf (sysfs, "%d", settings_get_sysfs_resume_input_value (settings));
 
     fclose (sysfs);
 }
 
+static gboolean
+handle_input_threshold_start (Suspend *self) {
+    if (self->priv->percentage <= self->priv->threshold_start) {
+        g_message ("Reached start threshold");
+        resume_input (self);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+static gboolean
+handle_input_threshold_end (Suspend *self) {
+    if (self->priv->percentage >= self->priv->threshold_end) {
+        g_message ("Reached end threshold");
+        suspend_input (self);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+static gboolean
+handle_input_threshold_max (Suspend *self) {
+    if (self->priv->percentage >= self->priv->threshold_max) {
+        g_message ("Reached max threshold");
+        suspend_input (self);
+        self->priv->next_alarm = 0;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean
+has_alarm_pending (Suspend *self) {
+    if (self->priv->next_alarm != 0 &&
+            self->priv->time_to_full != 0) {
+        g_autoptr(GDateTime) datetime;
+        gint64 timestamp;
+
+        datetime = g_date_time_new_now_utc ();
+        timestamp = g_date_time_to_unix (datetime);
+
+        if (self->priv->next_alarm - timestamp < self->priv->time_to_full)
+            return TRUE;
+    }
+    return FALSE;
+}
+static gboolean
+handle_input_threshold_alarm (Suspend *self) {
+    if (has_alarm_pending (self)) {
+        g_message ("Alarm pending: %ld", self->priv->next_alarm);
+        resume_input (self);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 
 static void
 handle_input (Suspend *self) {
-    if (self->priv->suspended) {
-        if (self->priv->next_alarm != 0 &&
-                self->priv->time_to_full != 0) {
-            g_autoptr(GDateTime) datetime;
-            gint64 timestamp;
-
-            datetime = g_date_time_new_now_utc ();
-            timestamp = g_date_time_to_unix (datetime);
-
-            if (self->priv->next_alarm - timestamp < self->priv->time_to_full) {
-                BimBus *bim_bus = bim_bus_get_default ();
-
-                g_debug (
-                    "Input handling: %ld - %ld  < %ld",
-                    self->priv->next_alarm,
-                    timestamp,
-                    self->priv->time_to_full
-                );
-                resume_input (self);
-
-                self->priv->next_alarm = bim_bus_get_next_alarm (bim_bus);
-            }
-
-        } else if (self->priv->next_alarm == 0 &&
-                  !self->priv->cycle_running &&
-                   self->priv->percentage <= self->priv->threshold_start) {
-            g_message ("Reached start threshold");
-            resume_input (self);
-
-        } else if (self->priv->percentage < self->priv->threshold_min) {
-            g_message ("Reached min threshold");
-            self->priv->cycle_running = FALSE;
-            resume_input (self);
+    if (self->priv->state & SUSPEND_ACTIVE) {
+        if (handle_input_threshold_start (self)) {
+            self->priv->state &= ~SUSPEND_LOCKED;
+            self->priv->next_alarm = bim_bus_get_next_alarm (
+                bim_bus_get_default ()
+            );
+            return;
+        }
+        if (handle_input_threshold_alarm (self)) {
+            self->priv->state |= SUSPEND_LOCKED;
+            return;
         }
     } else {
-        if (!self->priv->cycle_running &&
-               self->priv->percentage >= self->priv->threshold_end) {
-            g_message ("Reached end threshold");
-            self->priv->cycle_running = TRUE;
-            suspend_input (self);
-
-        } else if (self->priv->percentage == self->priv->threshold_max) {
-            g_message ("Reached max threshold");
-            suspend_input (self);
+        if (!(self->priv->state & SUSPEND_LOCKED)) {
+            if (has_alarm_pending (self)) {
+                g_message ("Alarm pending: %ld", self->priv->next_alarm);
+                self->priv->state |= SUSPEND_LOCKED;
+                return;
+            }
+            if (handle_input_threshold_end (self))
+                return;
         }
+        handle_input_threshold_max (self);
     }
 }
 
@@ -171,12 +211,10 @@ on_setting_changed (BimBus   *bim_bus,
                     gpointer  user_data) {
     Suspend *self = SUSPEND (user_data);
 
-    g_message ("on_setting_changed: %s -> %d", setting, value);
+    g_message ("Setting changed: %s -> %d", setting, value);
 
     if (g_strcmp0 (setting, "threshold-max") == 0)
         self->priv->threshold_max = value;
-    else if (g_strcmp0 (setting, "threshold-min") == 0)
-        self->priv->threshold_min = value;
     else if (g_strcmp0 (setting, "threshold-start") == 0)
         self->priv->threshold_start = value;
     else if (g_strcmp0 (setting, "threshold-end") == 0)
@@ -187,7 +225,7 @@ on_setting_changed (BimBus   *bim_bus,
 static void
 handle_time_to_full (Suspend  *self,
                      GVariant *data) {
-    if (!self->priv->suspended) {
+    if (!(self->priv->state & SUSPEND_ACTIVE)) {
         self->priv->time_to_full = g_variant_get_int64 (data);
         handle_input (self);
     }
@@ -218,35 +256,31 @@ static gboolean
 simulate_charging_cycle (Suspend *self) {
     g_autoptr(GDateTime) datetime;
     gint64 timestamp;
+    GRand *rand = g_rand_new ();
 
     datetime = g_date_time_new_now_utc ();
     timestamp = g_date_time_to_unix (datetime);
 
-    if (self->priv->suspended) {
+    if (self->priv->state & SUSPEND_ACTIVE) {
         self->priv->percentage -= 1;
+        g_message (
+            "Discharging: %f -> %ld",
+            self->priv->percentage,
+            timestamp
+        );
     } else {
         self->priv->percentage += 1;
+        g_message (
+            "Charging: %f -> %ld",
+            self->priv->percentage,
+            timestamp
+        );
     }
+    self->priv->time_to_full =  g_rand_int_range (rand, 20, 40);
 
-    if (self->priv->percentage >= INPUT_THRESHOLD_END &&
-            !self->priv->cycle_running &&
-            self->priv->next_alarm == 0) {
-        self->priv->next_alarm = timestamp + SIMULATE_CYCLE_ALARM;
-        self->priv->time_to_full = SIMULATE_CYCLE_FULL;
-        g_message ("next_alarm: %ld", self->priv->next_alarm);
-
-    } else if (self->priv->percentage >= INPUT_THRESHOLD_MAX) {
-        self->priv->next_alarm = 0;
-        self->priv->time_to_full = 0;
-    }
-
-    g_message (
-        "simulate_charging_cycle: %f -> %ld",
-        self->priv->percentage,
-        timestamp
-    );
     handle_input (self);
 
+    g_free (rand);
     return TRUE;
 }
 
@@ -390,13 +424,13 @@ suspend_init (Suspend *self)
 {
     self->priv = suspend_get_instance_private (self);
     
-    self->priv->suspended = FALSE;
-    self->priv->cycle_running = FALSE;
+    self->priv->percentage = 0.0;
+
+    self->priv->state = SUSPEND_NONE;
 
     self->priv->next_alarm = 0;
     self->priv->time_to_full = 0;
 
-    self->priv->threshold_min = INPUT_THRESHOLD_MIN;
     self->priv->threshold_max = INPUT_THRESHOLD_MAX;
     self->priv->threshold_start = INPUT_THRESHOLD_START;
     self->priv->threshold_end = INPUT_THRESHOLD_END;

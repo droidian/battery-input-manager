@@ -2,8 +2,8 @@
  * Copyright Cedric Bellegarde <cedric.bellegarde@adishatz.org>
  */
 
-#ifndef DBUS_H
-#define DBUS_H
+#ifndef DBUS_USER_H
+#define DBUS_USER_H
 
 #include <glib.h>
 #include <glib-object.h>
@@ -44,9 +44,12 @@ struct _BimBusClass {
 GType       bim_bus_get_type       (void) G_GNUC_CONST;
 BimBus     *bim_bus_get_default    (void);
 GObject*    bim_bus_new            (void);
+void        bim_bus_add_alarm      (BimBus      *self,
+                                    const gchar *app_id,
+                                    gint64       time);
 void        bim_bus_set_value      (BimBus      *self,
                                     const gchar *key,
-                                    gint     value);
+                                    gint         value);
 
 G_END_DECLS
 

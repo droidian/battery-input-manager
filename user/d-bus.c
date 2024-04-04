@@ -81,6 +81,35 @@ bim_bus_new (void)
 
 
 /**
+ * bim_bus_add_alarm:
+ *
+ * Add a new alarm.
+ *
+ * @self: a #BimBus
+ * @app_id: an app id
+ * @time: a timestamp
+ */
+void
+bim_bus_add_alarm (BimBus      *self,
+                   const gchar *app_id,
+                   gint64       time) {
+    g_autoptr (GError) error = NULL;
+
+    g_dbus_proxy_call_sync (
+        self->priv->bim_proxy,
+        "AddAlarm",
+        g_variant_new ("(&sx)", app_id, time),
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        &error
+    );
+
+    if (error != NULL)
+        g_warning ("Error adding an alarm: %s", error->message);
+}
+
+/**
  * bim_bus_set_value:
  *
  * Gets the next pending alarm.
