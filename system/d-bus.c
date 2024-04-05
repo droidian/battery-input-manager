@@ -5,7 +5,6 @@
 #include <gio/gio.h>
 
 #include "d-bus.h"
-#include "history.h"
 #include "utils.h"
 
 #define DBUS_NAME "org.adishatz.Bim"

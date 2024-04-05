@@ -8,7 +8,6 @@
 #include <gio/gio.h>
 
 #include "d-bus.h"
-#include "history.h"
 #include "settings.h"
 #include "suspend.h"
 
@@ -235,18 +234,11 @@ handle_time_to_full (Suspend  *self,
 static void
 handle_percentage (Suspend  *self,
                    GVariant *data) {
-    History *history = history_get_default ();
     g_autofree gchar *percentage;
 
     self->priv->percentage = g_variant_get_double (data);
 
     percentage = g_strdup_printf ("%f", self->priv->percentage);
-    history_add_event (
-        history,
-        HISTORY_EVENT_BATTERY_PERCENT,
-        percentage,
-        NULL
-    );
 
     handle_input (self);
 }

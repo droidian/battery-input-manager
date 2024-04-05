@@ -1,6 +1,5 @@
 bim_sources = [
   'd-bus.c',
-  'history.c',
   'main.c',
   'settings.c',
   'suspend.c'
