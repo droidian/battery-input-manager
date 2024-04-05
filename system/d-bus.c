@@ -5,7 +5,7 @@
 #include <gio/gio.h>
 
 #include "d-bus.h"
-#include "utils.h"
+#include "../common/utils.h"
 
 #define DBUS_NAME "org.adishatz.Bim"
 #define DBUS_PATH "/org/adishatz/Bim"
@@ -64,16 +64,16 @@ handle_method_call (GDBusConnection *connection,
     BimBus *self = user_data;
 
     if (g_strcmp0 (method_name, "AddAlarm") == 0) {
-        const gchar* app_id;
-        gint64 time;
+        const gchar* alarm_id;
+        gint64 timestamp;
 
-        g_variant_get (parameters, "(&sx)", &app_id, &time);
+        g_variant_get (parameters, "(&sx)", &alarm_id, &timestamp);
 
-        g_message ("Adding alarm: %ld", time);
+        g_message ("Adding alarm: %ld", timestamp);
 
         self->priv->alarms = g_list_insert_sorted (
             self->priv->alarms,
-            g_variant_new ("(&sx)", app_id, time),
+            g_variant_new ("(&sx)", alarm_id, timestamp),
             sort_alarms
         );
 
@@ -84,39 +84,18 @@ handle_method_call (GDBusConnection *connection,
         g_signal_emit(self, signals[ALARM_ADDED], 0);
     } else if (g_strcmp0 (method_name, "RemoveAlarm") == 0) {
         GVariant *data;
-        gint64 time = 0;
+        const gchar *alarm_id = NULL;
 
-        g_variant_get (parameters, "x", &time);
+        g_variant_get (parameters, "(&s)", &alarm_id);
 
         GFOREACH (self->priv->alarms, data) {
-            gint64 _time = 0;
-            g_variant_get (data, "(&sx)", NULL, &time);
-            if (time == _time) {
-                g_message ("Removing alarm at %ld", time);
+            const gchar *_alarm_id = NULL;
+            g_variant_get (data, "(&sx)", &_alarm_id, NULL);
+            if (g_strcmp0 (alarm_id, _alarm_id) == 0) {
+                g_message ("Removing alarm %s", _alarm_id);
                 self->priv->alarms = g_list_remove (self->priv->alarms, data);
                 g_free (data);
                 break;
-            }
-        };
-
-        g_dbus_method_invocation_return_value (
-            invocation, NULL
-        );
-        g_signal_emit(self, signals[ALARM_REMOVED], 0);
-
-    } else if (g_strcmp0 (method_name, "RemoveAlarms") == 0) {
-        GVariant *data;
-        const gchar *app_id = NULL;
-
-        g_variant_get (parameters, "(&s)", &app_id);
-
-        GFOREACH (self->priv->alarms, data) {
-            const gchar *_app_id = NULL;
-            g_variant_get (data, "(&sx)", &_app_id, NULL);
-            if (g_strcmp0 (app_id, _app_id) == 0) {
-                g_message ("Removing alarm for %s", app_id);
-                self->priv->alarms = g_list_remove (self->priv->alarms, data);
-                g_free (data);
             }
         };
 

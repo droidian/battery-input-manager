@@ -7,6 +7,7 @@
 #include "clocks.h"
 #include "config.h"
 #include "d-bus.h"
+#include "../common/utils.h"
 
 #define CLOCKS_ID "org.gnome.clocks"
 
@@ -28,35 +29,73 @@ G_DEFINE_TYPE_WITH_CODE (Clocks, clocks, G_TYPE_OBJECT,
 
 
 static void
-add_new_alarm (Clocks   *self,
-               GVariant *alarm) {
-    GVariantIter alarm_iter;
-    gchar *alarm_key;
-    GVariant *alarm_value;
-    gint state;
-    gint64 time;
+add_alarm (Clocks   *self,
+           const gchar *clock_id,
+           gint64 timestamp) {
+    g_message("Adding alarm: %s", clock_id);
 
-    g_variant_iter_init (&alarm_iter, alarm);
-    while (g_variant_iter_next (&alarm_iter, "{sv}", &alarm_key, &alarm_value)) {
-        if (g_strcmp0 (alarm_key, "time") == 0)
-            g_variant_get (alarm_value, "x", &time);
-        else if (g_strcmp0 (alarm_key, "state") == 0)
-            g_variant_get (alarm_value, "i", &state);
-    }
+    self->priv->alarms = g_list_append (self->priv->alarms, g_strdup (clock_id));
 
-    if (state == 1) {
-        g_message(
-            "Adding new alarm at: %ld", time
-        );
-        bim_bus_add_alarm (bim_bus_get_default (), APP_ID, time);
-    }
+    bim_bus_add_alarm (bim_bus_get_default (), clock_id, timestamp);
 }
 
 
 static void
-remove_alarms (void) {
-    g_message("Removing alarms");
-    bim_bus_remove_alarms (bim_bus_get_default (), APP_ID);
+remove_alarm (Clocks   *self,
+              const gchar *clock_id) {
+    const gchar *id;
+
+    GFOREACH (self->priv->alarms, id) {
+        if (g_strcmp0 (id, clock_id) == 0) {
+            g_message("Removing alarm: %s", id);
+            self->priv->alarms = g_list_remove (self->priv->alarms, id);
+            break;
+        }
+    };
+
+    bim_bus_remove_alarm (bim_bus_get_default (), clock_id);
+}
+
+
+static void
+update_alarm (Clocks   *self,
+              GVariant *alarm) {
+    GVariantIter alarm_iter;
+    gchar *alarm_key;
+    GVariant *alarm_value;
+    const gchar *clock_id = NULL;
+    const gchar *new_clock_id = NULL;
+    const gchar *ring_time = NULL;
+    gboolean alarm_exists = FALSE;
+
+    g_variant_iter_init (&alarm_iter, alarm);
+    while (g_variant_iter_next (&alarm_iter, "{sv}", &alarm_key, &alarm_value)) {
+        if (g_strcmp0 (alarm_key, "ring_time") == 0)
+            g_variant_get (alarm_value, "s", &ring_time);
+        else if (g_strcmp0 (alarm_key, "id") == 0)
+            g_variant_get (alarm_value, "s", &new_clock_id);
+    }
+
+    g_return_if_fail (new_clock_id != NULL);
+
+    GFOREACH (self->priv->alarms, clock_id) {
+        if (g_strcmp0 (clock_id, new_clock_id) == 0) {
+            alarm_exists = TRUE;
+            break;
+        }
+    };
+
+    g_message ("%p", ring_time);
+    if (!alarm_exists && ring_time != NULL) {
+        g_autoptr(GDateTime) datetime;
+        gint64 timestamp;
+        datetime = g_date_time_new_from_iso8601 (ring_time, NULL);
+        timestamp = g_date_time_to_unix (datetime);
+        add_alarm (self, new_clock_id, timestamp);
+
+    } else if (alarm_exists && ring_time == NULL) {
+        remove_alarm (self, new_clock_id);
+    }
 }
 
 
@@ -92,8 +131,6 @@ on_alarms_changed (GSettings   *settings,
     GVariantIter alarms_iter;
     GVariant *alarm;
 
-    remove_alarms ();
-
     alarms = g_settings_get_value (settings, key);
 
     if (alarms == NULL)
@@ -101,7 +138,7 @@ on_alarms_changed (GSettings   *settings,
 
     g_variant_iter_init (&alarms_iter, alarms);
     while ((alarm = g_variant_iter_next_value (&alarms_iter))) {
-        add_new_alarm (self, alarm);
+        update_alarm (self, alarm);
         g_variant_unref (alarm);
     }
     g_variant_unref (alarms);

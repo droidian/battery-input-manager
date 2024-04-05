@@ -90,7 +90,7 @@ bim_bus_new (void)
  */
 void
 bim_bus_add_alarm (BimBus      *self,
-                   const gchar *app_id,
+                   const gchar *alarm_id,
                    gint64       time) {
     g_autoptr (GError) error = NULL;
     GVariant *result = NULL;
@@ -98,7 +98,7 @@ bim_bus_add_alarm (BimBus      *self,
     result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
         "AddAlarm",
-        g_variant_new ("(&sx)", app_id, time),
+        g_variant_new ("(&sx)", alarm_id, time),
         G_DBUS_CALL_FLAGS_NONE,
         -1,
         NULL,
@@ -113,22 +113,22 @@ bim_bus_add_alarm (BimBus      *self,
 
 
 /**
- * bim_bus_remove_alarms:
+ * bim_bus_remove_alarm:
  *
  * Remove alarms our alarms.
  *
  * @self: a #BimBus
  */
 void
-bim_bus_remove_alarms (BimBus      *self,
-                       const gchar *app_id) {
+bim_bus_remove_alarm (BimBus      *self,
+                      const gchar *alarm_id) {
     g_autoptr (GError) error = NULL;
     GVariant *result = NULL;
 
     result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
-        "RemoveAlarms",
-        g_variant_new ("(&s)", app_id),
+        "RemoveAlarm",
+        g_variant_new ("(&s)", alarm_id),
         G_DBUS_CALL_FLAGS_NONE,
         -1,
         NULL,
