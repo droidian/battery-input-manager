@@ -8,15 +8,24 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "clocks.h"
+#include "d-bus.h"
 #include "settings.h"
+
+
+static GMainLoop *loop;
+
+static void
+sigint_handler(int dummy) {
+    g_main_loop_quit (loop);
+}
 
 
 gint
 main (gint argc, gchar * argv[])
 {
-    GMainLoop *loop;
     g_autoptr (GOptionContext) context = NULL;
     g_autoptr (GError) error = NULL;
     gboolean version = FALSE;
@@ -26,6 +35,8 @@ main (gint argc, gchar * argv[])
         {"version", 0, 0, G_OPTION_ARG_NONE, &version, "Show version"},
         {NULL}
     };
+
+    signal(SIGINT, sigint_handler);
 
     context = g_option_context_new ("Battery Input Manager");
     g_option_context_add_main_entries (context, main_entries, NULL);
@@ -40,6 +51,7 @@ main (gint argc, gchar * argv[])
         return EXIT_SUCCESS;
     }
 
+    bim_bus_get_default ();
     settings_get_default ();
     clocks_get_default (simulate);
 

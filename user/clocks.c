@@ -160,9 +160,12 @@ clocks_dispose (GObject *clocks)
 {
     Clocks *self = CLOCKS (clocks);
 
+    g_list_free_full (self->priv->alarms, g_free);
+    g_clear_object (&self->priv->settings);
     g_free (self->priv);
 
     G_OBJECT_CLASS (clocks_parent_class)->dispose (clocks);
+    g_warning("dispose");
 }
 
 static void
@@ -194,9 +197,7 @@ static void
 clocks_init (Clocks *self)
 {
     self->priv = clocks_get_instance_private (self);
-
     self->priv->settings = g_settings_new (CLOCKS_ID);
-
     self->priv->alarms = NULL;
 }
 
@@ -232,5 +233,5 @@ clocks_get_default (gboolean simulate)
     if (!default_clocks) {
         default_clocks = CLOCKS (clocks_new (simulate));
     }
-    return g_object_ref (default_clocks);
+    return default_clocks;
 }

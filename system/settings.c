@@ -27,6 +27,7 @@ settings_dispose (GObject *settings)
 {
     Settings *self = SETTINGS (settings);
 
+    g_free (self->priv->sysfs_suspend_input_path);
     g_free (self->priv);
 
     G_OBJECT_CLASS (settings_parent_class)->dispose (settings);

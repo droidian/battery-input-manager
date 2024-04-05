@@ -40,6 +40,7 @@ settings_dispose (GObject *settings)
 {
     Settings *self = SETTINGS (settings);
 
+    g_clear_object (&self->priv->settings);
     g_free (self->priv);
 
     G_OBJECT_CLASS (settings_parent_class)->dispose (settings);
@@ -134,5 +135,5 @@ settings_get_default (void)
     if (!default_settings) {
         default_settings = SETTINGS (settings_new ());
     }
-    return g_object_ref (default_settings);
+    return default_settings;
 }

@@ -26,7 +26,6 @@ bim_bus_dispose (GObject *bim_bus)
     BimBus *self = BIM_BUS (bim_bus);
 
     g_clear_object (&self->priv->bim_proxy);
-
     g_free (self->priv);
 
     G_OBJECT_CLASS (bim_bus_parent_class)->dispose (bim_bus);
@@ -94,8 +93,9 @@ bim_bus_add_alarm (BimBus      *self,
                    const gchar *app_id,
                    gint64       time) {
     g_autoptr (GError) error = NULL;
+    GVariant *result = NULL;
 
-    g_dbus_proxy_call_sync (
+    result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
         "AddAlarm",
         g_variant_new ("(&sx)", app_id, time),
@@ -105,7 +105,9 @@ bim_bus_add_alarm (BimBus      *self,
         &error
     );
 
-    if (error != NULL)
+    if (error == NULL)
+        g_variant_unref (result);
+    else
         g_warning ("Error adding an alarm: %s", error->message);
 }
 
@@ -121,8 +123,9 @@ bim_bus_add_alarm (BimBus      *self,
 void
 bim_bus_set_value (BimBus *self, const gchar *key, gint value) {
     g_autoptr (GError) error = NULL;
+    GVariant *result = NULL;
 
-    g_dbus_proxy_call_sync (
+    result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
         "Set",
         g_variant_new ("(&si)", key, value),
@@ -132,7 +135,9 @@ bim_bus_set_value (BimBus *self, const gchar *key, gint value) {
         &error
     );
 
-    if (error != NULL)
+    if (error == NULL)
+        g_variant_unref (result);
+    else
         g_warning ("Error updating setting: %s", error->message);
 }
 
@@ -151,5 +156,5 @@ bim_bus_get_default (void)
     if (!default_bim_bus) {
         default_bim_bus = BIM_BUS (bim_bus_new ());
     }
-    return g_object_ref (default_bim_bus);
+    return default_bim_bus;
 }

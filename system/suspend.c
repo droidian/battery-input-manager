@@ -235,7 +235,6 @@ handle_percentage (Suspend  *self,
     self->priv->previous_percentage = self->priv->percentage;
 
     self->priv->percentage = g_variant_get_int32 (data);
-    g_variant_unref (data);
 }
 
 

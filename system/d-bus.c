@@ -196,6 +196,7 @@ bim_bus_dispose (GObject *bim_bus)
         g_bus_unown_name (self->priv->owner_id);
     }
 
+    g_list_free_full (self->priv->alarms, g_free);
     g_clear_pointer (&self->priv->introspection_data, g_dbus_node_info_unref);
     g_clear_object (&self->priv->connection);
 
