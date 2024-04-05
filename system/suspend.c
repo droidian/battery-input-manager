@@ -17,13 +17,14 @@
 #define UPOWER_DBUS_INTERFACE  "org.freedesktop.UPower.Device"
 
 
-#define INPUT_THRESHOLD_START 60
-#define INPUT_THRESHOLD_END   80
-#define INPUT_THRESHOLD_MAX   100
+#define INPUT_THRESHOLD_START  60
+#define INPUT_THRESHOLD_END    80
+#define INPUT_THRESHOLD_MAX    100
 
+#define REFRESH_RATE           600000
+#define REFRESH_RATE_SIMULATE  1000
 
-#define SIMULATE_CYCLE_START 70
-#define SIMULATE_CYCLE_TIMEOUT 1000
+#define SIMULATE_CYCLE_START   70
 
 
 enum {
@@ -158,7 +159,7 @@ handle_input_threshold_alarm (Suspend *self) {
 }
 
 
-static void
+static gboolean
 handle_input (Suspend *self) {
     if (self->priv->suspended) {
         if (handle_input_threshold_start (self)) {
@@ -166,24 +167,25 @@ handle_input (Suspend *self) {
             self->priv->next_alarm = bim_bus_get_next_alarm (
                 bim_bus_get_default ()
             );
-            return;
+            return TRUE;
         }
         if (handle_input_threshold_alarm (self)) {
             self->priv->suspend_lock = TRUE;
-            return;
+            return TRUE;
         }
     } else {
         if (!self->priv->suspend_lock) {
             if (has_alarm_pending (self)) {
                 g_message ("Alarm pending: %ld", self->priv->next_alarm);
                 self->priv->suspend_lock = TRUE;
-                return;
+                return TRUE;
             }
             if (handle_input_threshold_end (self))
-                return;
+                return TRUE;
         }
         handle_input_threshold_max (self);
     }
+    return TRUE;
 }
 
 
@@ -222,10 +224,8 @@ log_percentage (Suspend *self) {
 static void
 handle_time_to_full (Suspend  *self,
                      GVariant *data) {
-    if (!self->priv->suspended) {
+    if (!self->priv->suspended)
         self->priv->time_to_full = g_variant_get_int64 (data);
-        handle_input (self);
-    }
 }
 
 
@@ -236,8 +236,6 @@ handle_percentage (Suspend  *self,
 
     self->priv->percentage = g_variant_get_int32 (data);
     g_variant_unref (data);
-
-    handle_input (self);
 }
 
 
@@ -289,7 +287,6 @@ on_alarm_updated (BimBus  *bim_bus,
     Suspend *self = SUSPEND (user_data);
 
     self->priv->next_alarm = bim_bus_get_next_alarm (bim_bus);
-    handle_input (user_data);
 }
 
 
@@ -316,7 +313,7 @@ suspend_connect_upower (Suspend *self) {
     if (self->priv->simulate) {
         self->priv->percentage = SIMULATE_CYCLE_START;
         g_timeout_add (
-            SIMULATE_CYCLE_TIMEOUT,
+            REFRESH_RATE_SIMULATE,
             (GSourceFunc) simulate_charging_cycle,
             self
         );
@@ -341,6 +338,11 @@ suspend_connect_upower (Suspend *self) {
             self->priv->upower_proxy,
             "g-properties-changed",
             G_CALLBACK (on_upower_proxy_properties),
+            self
+        );
+        g_timeout_add (
+            REFRESH_RATE,
+            (GSourceFunc) handle_input,
             self
         );
     }
