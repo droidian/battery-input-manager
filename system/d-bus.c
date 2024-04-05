@@ -83,16 +83,38 @@ handle_method_call (GDBusConnection *connection,
 
         g_signal_emit(self, signals[ALARM_ADDED], 0);
     } else if (g_strcmp0 (method_name, "RemoveAlarm") == 0) {
-        const gchar* app_id;
         GVariant *data;
-        gint64 time;
+        gint64 time = 0;
 
-        g_variant_get (parameters, "(&sv)", &app_id, &time);
+        g_variant_get (parameters, "x", &time);
 
         GFOREACH (self->priv->alarms, data) {
-            gint64 _time = g_variant_get_int64 (data);
+            gint64 _time = 0;
+            g_variant_get (data, "(&sx)", NULL, &time);
             if (time == _time) {
-                g_message ("%s removing alarm at %ld", app_id, time);
+                g_message ("Removing alarm at %ld", time);
+                self->priv->alarms = g_list_remove (self->priv->alarms, data);
+                g_free (data);
+                break;
+            }
+        };
+
+        g_dbus_method_invocation_return_value (
+            invocation, NULL
+        );
+        g_signal_emit(self, signals[ALARM_REMOVED], 0);
+
+    } else if (g_strcmp0 (method_name, "RemoveAlarms") == 0) {
+        GVariant *data;
+        const gchar *app_id = NULL;
+
+        g_variant_get (parameters, "&s", app_id);
+
+        GFOREACH (self->priv->alarms, data) {
+            const gchar *_app_id = NULL;
+            g_variant_get (data, "(&sx)", _app_id, NULL);
+            if (g_strcmp0 (app_id, _app_id) == 0) {
+                g_message ("Removing alarm for %s", app_id);
                 self->priv->alarms = g_list_remove (self->priv->alarms, data);
                 g_free (data);
                 break;
@@ -105,7 +127,7 @@ handle_method_call (GDBusConnection *connection,
         g_signal_emit(self, signals[ALARM_REMOVED], 0);
 
     } else if (g_strcmp0 (method_name, "Set") == 0) {
-        const gchar* setting;
+        const gchar *setting;
         gint value;
 
         g_variant_get (parameters, "(&si)", &setting, &value);
