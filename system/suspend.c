@@ -26,14 +26,6 @@
 #define SIMULATE_CYCLE_TIMEOUT 1000
 
 
-enum
-{
-    SUSPEND_NONE       = 1 << 0,
-    SUSPEND_ACTIVE     = 1 << 1,
-    SUSPEND_LOCKED   = 1 << 2
-};
-
-
 enum {
     PROP_0,
     PROP_SIMULATE
@@ -50,9 +42,11 @@ struct _SuspendPrivate {
     guint64 next_alarm;
     guint64 time_to_full;
 
-    gdouble percentage;
+    gint percentage;
+    gint previous_percentage;
 
-    gint state;
+    gboolean suspended;
+    gboolean suspend_lock;
 
     gboolean simulate;
 };
@@ -79,7 +73,7 @@ suspend_input (Suspend *self) {
     g_return_if_fail (sysfs != NULL);
 
     g_message ("Suspending input");
-    self->priv->state |= SUSPEND_ACTIVE;
+    self->priv->suspended = TRUE;
     fprintf (sysfs, "%d", settings_get_sysfs_suspend_input_value (settings));
 
     fclose (sysfs);
@@ -99,7 +93,7 @@ resume_input (Suspend *self) {
     g_return_if_fail (sysfs != NULL);
 
     g_message ("Resuming input");
-    self->priv->state &= ~SUSPEND_ACTIVE;
+    self->priv->suspended = FALSE;
     fprintf (sysfs, "%d", settings_get_sysfs_resume_input_value (settings));
 
     fclose (sysfs);
@@ -166,29 +160,125 @@ handle_input_threshold_alarm (Suspend *self) {
 
 static void
 handle_input (Suspend *self) {
-    if (self->priv->state & SUSPEND_ACTIVE) {
+    if (self->priv->suspended) {
         if (handle_input_threshold_start (self)) {
-            self->priv->state &= ~SUSPEND_LOCKED;
+            self->priv->suspend_lock = FALSE;
             self->priv->next_alarm = bim_bus_get_next_alarm (
                 bim_bus_get_default ()
             );
             return;
         }
         if (handle_input_threshold_alarm (self)) {
-            self->priv->state |= SUSPEND_LOCKED;
+            self->priv->suspend_lock = TRUE;
             return;
         }
     } else {
-        if (!(self->priv->state & SUSPEND_LOCKED)) {
+        if (!self->priv->suspend_lock) {
             if (has_alarm_pending (self)) {
                 g_message ("Alarm pending: %ld", self->priv->next_alarm);
-                self->priv->state |= SUSPEND_LOCKED;
+                self->priv->suspend_lock = TRUE;
                 return;
             }
             if (handle_input_threshold_end (self))
                 return;
         }
         handle_input_threshold_max (self);
+    }
+}
+
+
+static void
+log_percentage (Suspend *self) {
+    g_autoptr(GDateTime) datetime;
+    const gchar *status;
+    gint64 timestamp;
+
+    datetime = g_date_time_new_now_utc ();
+    timestamp = g_date_time_to_unix (datetime);
+
+    if (self->priv->percentage > self->priv->previous_percentage)
+        status = "Charging";
+    else
+        status = "Discharging";
+
+    timestamp = self->priv->next_alarm - timestamp;
+    if (timestamp > 0) {
+        g_message (
+            "%s: %d (%ld)",
+            status,
+            self->priv->percentage,
+            timestamp
+        );
+    } else {
+        g_message (
+            "%s: %d",
+            status,
+            self->priv->percentage
+        );
+    }
+}
+
+
+static void
+handle_time_to_full (Suspend  *self,
+                     GVariant *data) {
+    if (!self->priv->suspended) {
+        self->priv->time_to_full = g_variant_get_int64 (data);
+        handle_input (self);
+    }
+}
+
+
+static void
+handle_percentage (Suspend  *self,
+                   GVariant *data) {
+    self->priv->previous_percentage = self->priv->percentage;
+
+    self->priv->percentage = g_variant_get_int32 (data);
+    g_variant_unref (data);
+
+    handle_input (self);
+}
+
+
+static gboolean
+simulate_charging_cycle (Suspend *self) {
+    GRand *rand = g_rand_new ();
+
+    if (self->priv->suspended)
+        self->priv->percentage -= 1;
+    else
+        self->priv->percentage += 1;
+
+    self->priv->time_to_full =  g_rand_int_range (rand, 20, 40);
+
+    log_percentage (self);
+    handle_input (self);
+
+    g_free (rand);
+    return TRUE;
+}
+
+static void
+on_upower_proxy_properties (GDBusProxy  *proxy,
+                            GVariant    *changed_properties,
+                            char       **invalidated_properties,
+                            gpointer     user_data)
+{
+    Suspend *self = user_data;
+    GVariant *value;
+    char *property;
+    GVariantIter i;
+
+    g_variant_iter_init (&i, changed_properties);
+    while (g_variant_iter_next (&i, "{&sv}", &property, &value)) {
+        if (g_strcmp0 (property, "TimeToFull") == 0) {
+            handle_time_to_full (self, value);
+        } else if (g_strcmp0 (property, "Percentage") == 0) {
+            handle_percentage (self, value);
+        }
+
+        g_variant_unref (value);
     }
 }
 
@@ -218,85 +308,6 @@ on_setting_changed (BimBus   *bim_bus,
         self->priv->threshold_start = value;
     else if (g_strcmp0 (setting, "threshold-end") == 0)
         self->priv->threshold_end = value;
-}
-
-
-static void
-handle_time_to_full (Suspend  *self,
-                     GVariant *data) {
-    if (!(self->priv->state & SUSPEND_ACTIVE)) {
-        self->priv->time_to_full = g_variant_get_int64 (data);
-        handle_input (self);
-    }
-}
-
-
-static void
-handle_percentage (Suspend  *self,
-                   GVariant *data) {
-    g_autofree gchar *percentage;
-
-    self->priv->percentage = g_variant_get_double (data);
-
-    percentage = g_strdup_printf ("%f", self->priv->percentage);
-
-    handle_input (self);
-}
-
-
-static gboolean
-simulate_charging_cycle (Suspend *self) {
-    g_autoptr(GDateTime) datetime;
-    gint64 timestamp;
-    GRand *rand = g_rand_new ();
-
-    datetime = g_date_time_new_now_utc ();
-    timestamp = g_date_time_to_unix (datetime);
-
-    if (self->priv->state & SUSPEND_ACTIVE) {
-        self->priv->percentage -= 1;
-        g_message (
-            "Discharging: %f -> %ld",
-            self->priv->percentage,
-            timestamp
-        );
-    } else {
-        self->priv->percentage += 1;
-        g_message (
-            "Charging: %f -> %ld",
-            self->priv->percentage,
-            timestamp
-        );
-    }
-    self->priv->time_to_full =  g_rand_int_range (rand, 20, 40);
-
-    handle_input (self);
-
-    g_free (rand);
-    return TRUE;
-}
-
-static void
-on_upower_proxy_properties (GDBusProxy  *proxy,
-                            GVariant    *changed_properties,
-                            char       **invalidated_properties,
-                            gpointer     user_data)
-{
-    Suspend *self = user_data;
-    GVariant *value;
-    char *property;
-    GVariantIter i;
-
-    g_variant_iter_init (&i, changed_properties);
-    while (g_variant_iter_next (&i, "{&sv}", &property, &value)) {
-        if (g_strcmp0 (property, "TimeToFull") == 0) {
-            handle_time_to_full (self, value);
-        } else if (g_strcmp0 (property, "Percentage") == 0) {
-            handle_percentage (self, value);
-        }
-
-        g_variant_unref (value);
-    }
 }
 
 
@@ -416,9 +427,11 @@ suspend_init (Suspend *self)
 {
     self->priv = suspend_get_instance_private (self);
     
-    self->priv->percentage = 0.0;
+    self->priv->percentage = 0;
+    self->priv->previous_percentage = 0;
 
-    self->priv->state = SUSPEND_NONE;
+    self->priv->suspended = FALSE;
+    self->priv->suspend_lock = FALSE;
 
     self->priv->next_alarm = 0;
     self->priv->time_to_full = 0;
