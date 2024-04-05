@@ -117,7 +117,6 @@ handle_method_call (GDBusConnection *connection,
                 g_message ("Removing alarm for %s", app_id);
                 self->priv->alarms = g_list_remove (self->priv->alarms, data);
                 g_free (data);
-                break;
             }
         };
 
