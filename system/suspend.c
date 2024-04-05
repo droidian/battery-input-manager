@@ -21,6 +21,7 @@
 #define INPUT_THRESHOLD_END    80
 #define INPUT_THRESHOLD_MAX    100
 
+#define REFRESH_RATE_START     10000
 #define REFRESH_RATE           600000
 #define REFRESH_RATE_SIMULATE  1000
 
@@ -45,6 +46,8 @@ struct _SuspendPrivate {
 
     gint percentage;
     gint previous_percentage;
+
+    guint handle_timeout_id;
 
     gboolean suspended;
     gboolean suspend_lock;
@@ -159,7 +162,7 @@ handle_input_threshold_alarm (Suspend *self) {
 }
 
 
-static gboolean
+static void
 handle_input (Suspend *self) {
     if (self->priv->suspended) {
         if (handle_input_threshold_start (self)) {
@@ -167,25 +170,38 @@ handle_input (Suspend *self) {
             self->priv->next_alarm = bim_bus_get_next_alarm (
                 bim_bus_get_default ()
             );
-            return TRUE;
+            return;
         }
         if (handle_input_threshold_alarm (self)) {
             self->priv->suspend_lock = TRUE;
-            return TRUE;
+            return;
         }
     } else {
         if (!self->priv->suspend_lock) {
             if (has_alarm_pending (self)) {
                 g_message ("Alarm pending: %ld", self->priv->next_alarm);
                 self->priv->suspend_lock = TRUE;
-                return TRUE;
+                return;
             }
             if (handle_input_threshold_end (self))
-                return TRUE;
+                return;
         }
         handle_input_threshold_max (self);
     }
-    return TRUE;
+}
+
+
+static gboolean
+handle_input_timeout (Suspend *self) {
+    handle_input (self);
+
+    self->priv->handle_timeout_id = g_timeout_add (
+        REFRESH_RATE,
+        (GSourceFunc) handle_input_timeout,
+        self
+    );
+
+    return FALSE;
 }
 
 
@@ -255,8 +271,30 @@ simulate_charging_cycle (Suspend *self) {
     handle_input (self);
 
     g_free (rand);
+
     return TRUE;
 }
+
+
+static void
+start_handling_input (Suspend *self) {
+    g_clear_handle_id (&self->priv->handle_timeout_id, g_source_remove);
+
+    if (self->priv->simulate) {
+        self->priv->handle_timeout_id = g_timeout_add (
+            REFRESH_RATE_SIMULATE,
+            (GSourceFunc) simulate_charging_cycle,
+            self
+        );
+    } else {
+        self->priv->handle_timeout_id = g_timeout_add (
+            REFRESH_RATE_START,
+            (GSourceFunc) handle_input_timeout,
+            self
+        );
+    }
+}
+
 
 static void
 on_upower_proxy_properties (GDBusProxy  *proxy,
@@ -307,7 +345,7 @@ on_setting_changed (BimBus   *bim_bus,
     else if (g_strcmp0 (setting, "threshold-end") == 0)
         self->priv->threshold_end = value;
 
-    handle_input (self);
+    start_handling_input (self);
 }
 
 
@@ -315,11 +353,6 @@ static void
 suspend_connect_upower (Suspend *self) {
     if (self->priv->simulate) {
         self->priv->percentage = SIMULATE_CYCLE_START;
-        g_timeout_add (
-            REFRESH_RATE_SIMULATE,
-            (GSourceFunc) simulate_charging_cycle,
-            self
-        );
     } else {
         g_autoptr (GError) error = NULL;
 
@@ -343,12 +376,8 @@ suspend_connect_upower (Suspend *self) {
             G_CALLBACK (on_upower_proxy_properties),
             self
         );
-        g_timeout_add (
-            REFRESH_RATE,
-            (GSourceFunc) handle_input,
-            self
-        );
     }
+    start_handling_input (self);
 }
 
 static void
@@ -394,6 +423,8 @@ static void
 suspend_dispose (GObject *suspend)
 {
     Suspend *self = SUSPEND (suspend);
+
+    g_clear_handle_id (&self->priv->handle_timeout_id, g_source_remove);
 
     if (!self->priv->simulate)
         g_clear_object (&self->priv->upower_proxy);
