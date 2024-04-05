@@ -108,11 +108,11 @@ handle_method_call (GDBusConnection *connection,
         GVariant *data;
         const gchar *app_id = NULL;
 
-        g_variant_get (parameters, "&s", app_id);
+        g_variant_get (parameters, "(&s)", &app_id);
 
         GFOREACH (self->priv->alarms, data) {
             const gchar *_app_id = NULL;
-            g_variant_get (data, "(&sx)", _app_id, NULL);
+            g_variant_get (data, "(&sx)", &_app_id, NULL);
             if (g_strcmp0 (app_id, _app_id) == 0) {
                 g_message ("Removing alarm for %s", app_id);
                 self->priv->alarms = g_list_remove (self->priv->alarms, data);

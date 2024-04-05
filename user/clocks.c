@@ -50,6 +50,14 @@ add_new_alarm (Clocks   *self,
     }
 }
 
+
+static void
+remove_alarms (void) {
+    g_message("Removing alarms");
+    bim_bus_remove_alarms (bim_bus_get_default (), APP_ID);
+}
+
+
 static void
 add_fake_alarms (Clocks *self) {
     g_autoptr(GDateTime) datetime;
@@ -81,6 +89,8 @@ on_alarms_changed (GSettings   *settings,
     GVariant *alarms = NULL;
     GVariantIter alarms_iter;
     GVariant *alarm;
+
+    remove_alarms ();
 
     alarms = g_settings_get_value (settings, key);
 

@@ -111,6 +111,37 @@ bim_bus_add_alarm (BimBus      *self,
         g_warning ("Error adding an alarm: %s", error->message);
 }
 
+
+/**
+ * bim_bus_remove_alarms:
+ *
+ * Remove alarms our alarms.
+ *
+ * @self: a #BimBus
+ */
+void
+bim_bus_remove_alarms (BimBus      *self,
+                       const gchar *app_id) {
+    g_autoptr (GError) error = NULL;
+    GVariant *result = NULL;
+
+    result = g_dbus_proxy_call_sync (
+        self->priv->bim_proxy,
+        "RemoveAlarms",
+        g_variant_new ("(&s)", app_id),
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        &error
+    );
+
+    if (error == NULL)
+        g_variant_unref (result);
+    else
+        g_warning ("Error removing alarms: %s", error->message);
+}
+
+
 /**
  * bim_bus_set_value:
  *

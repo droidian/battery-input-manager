@@ -47,6 +47,8 @@ GObject*    bim_bus_new            (void);
 void        bim_bus_add_alarm      (BimBus      *self,
                                     const gchar *app_id,
                                     gint64       time);
+void        bim_bus_remove_alarms  (BimBus      *self,
+                                    const gchar *key);
 void        bim_bus_set_value      (BimBus      *self,
                                     const gchar *key,
                                     gint         value);
