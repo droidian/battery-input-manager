@@ -306,6 +306,8 @@ on_setting_changed (BimBus   *bim_bus,
         self->priv->threshold_start = value;
     else if (g_strcmp0 (setting, "threshold-end") == 0)
         self->priv->threshold_end = value;
+
+    handle_input (self);
 }
 
 
