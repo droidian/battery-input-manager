@@ -12,11 +12,19 @@
 #include "d-bus.h"
 #include "suspend.h"
 
+
+static GMainLoop *loop;
+
+
+static void
+sigint_handler(int dummy) {
+    g_main_loop_quit (loop);
+}
+
+
 gint
 main (gint argc, gchar * argv[])
 {
-    GMainLoop *loop;
-    GObject *suspend;
     GResource *resource;
     g_autoptr (GOptionContext) context = NULL;
     g_autoptr (GError) error = NULL;
@@ -27,6 +35,8 @@ main (gint argc, gchar * argv[])
         {"version", 0, 0, G_OPTION_ARG_NONE, &version, "Show version"},
         {NULL}
     };
+
+    signal(SIGINT, sigint_handler);
 
     context = g_option_context_new ("Battery Input Manager");
     g_option_context_add_main_entries (context, main_entries, NULL);
@@ -45,14 +55,12 @@ main (gint argc, gchar * argv[])
     g_resources_register (resource);
 
     bim_bus_get_default ();
-    suspend = suspend_new (simulate);
+    suspend_new (simulate);
 
     loop = g_main_loop_new (NULL, FALSE);
     g_main_loop_run (loop);
 
     g_clear_pointer (&loop, g_main_loop_unref);
-    g_clear_object (&suspend);
-    g_clear_object (&resource);
 
     return EXIT_SUCCESS;
 }
