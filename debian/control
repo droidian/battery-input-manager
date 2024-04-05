@@ -1,0 +1,19 @@
+Source: battery-input-manager
+Section: utils
+Priority: optional
+Maintainer: Cédric Bellegarde <cedric.bellegarde@adishatz.org>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 4.6.2
+Homepage: https://gitlab.gnome.org/gnumdk/battery-input-manager
+#Vcs-Browser: https://gitlab.gnome.org/gnumdk/battery-input-manager
+#Vcs-Git: https://gitlab.gnome.org/gnumdk/battery-input-manager.git
+
+Package: battery-input-manager
+Architecture: any
+Depends:
+ dbus,
+ ${shlibs:Depends},
+ ${misc:Depends},
+Description: Battery Input Manager suspends battery input to save battery health.

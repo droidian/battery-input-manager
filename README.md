@@ -1,6 +1,6 @@
 # Battery Input Manager daemon
 
-Battery Input Manager allows stoping charging your device when uneeded.
+Battery Input Manager suspends battery input to save battery health.
 
 ## Depends on
 
