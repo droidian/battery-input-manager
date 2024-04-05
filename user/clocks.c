@@ -33,20 +33,22 @@ add_new_alarm (Clocks   *self,
     GVariantIter alarm_iter;
     gchar *alarm_key;
     GVariant *alarm_value;
+    gint state;
     gint64 time;
 
     g_variant_iter_init (&alarm_iter, alarm);
     while (g_variant_iter_next (&alarm_iter, "{sv}", &alarm_key, &alarm_value)) {
-        if (g_strcmp0 (alarm_key, "time") != 0)
-            continue;
+        if (g_strcmp0 (alarm_key, "time") == 0)
+            g_variant_get (alarm_value, "x", &time);
+        else if (g_strcmp0 (alarm_key, "state") == 0)
+            g_variant_get (alarm_value, "i", &state);
+    }
 
+    if (state == 1) {
         g_message(
-            "Adding new alarm at: %s",
-            g_variant_print(alarm_value, FALSE)
+            "Adding new alarm at: %ld", time
         );
-        g_variant_get (alarm_value, "x", &time);
         bim_bus_add_alarm (bim_bus_get_default (), APP_ID, time);
-        break;
     }
 }
 
