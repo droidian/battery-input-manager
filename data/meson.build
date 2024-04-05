@@ -1,12 +1,20 @@
-# DBus services
+# DBus service
 configure_file(
-  input: 'bim_system.service.in',
-  output: 'bim.service',
+  input: 'org.adishatz.Bim.service.in',
+  output: 'org.adishatz.Bim.service',
   configuration: config_h,
   install: true,
   install_dir: dbus_service_dir
 )
 
+# User service
+configure_file(
+  input: 'battery-input-manager_user.service.in',
+  output: 'battery-input-manager.service',
+  configuration: config_h,
+  install: true,
+  install_dir: systemd_user_dir
+)
 
 # DBus configuration
 install_data(

@@ -1,0 +1,9 @@
+[Unit]
+Description=Battery Input Manager
+
+[Service]
+Type=exec
+ExecStart=@BIN_DIR@/bim
+
+[Install]
+WantedBy=default.target

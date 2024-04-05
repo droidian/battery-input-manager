@@ -8,12 +8,6 @@ cc = meson.get_compiler('c')
 
 prefix = get_option('prefix')
 
-if prefix.contains('/home')
-  bim_var_lib = join_paths(prefix, 'var/lib/bim')
-else
-  bim_var_lib = '/var/lib/bim'
-endif
-
 data_dir = join_paths(prefix, get_option('datadir'))
 bim_data_dir = join_paths(data_dir, meson.project_name())
 bim_resource = join_paths(bim_data_dir, meson.project_name() + '.gresource')
@@ -30,7 +24,7 @@ config_h.set('APP_ID', '"org.adishatz.Bim"')
 config_h.set_quoted('PACKAGE_VERSION', meson.project_version())
 config_h.set('BIM_RESOURCES', '"' + bim_resource + '"')
 config_h.set('DEVICES_JSON', '"' + devices_json + '"')
-config_h.set('VAR_LIB_DIR', '"' + bim_var_lib + '"')
+config_h.set('BIN_DIR', bin_dir)
 config_h.set('SBIN_DIR', sbin_dir)
 
 configure_file(output: 'config.h', configuration: config_h)

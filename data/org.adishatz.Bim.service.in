@@ -1,4 +1,4 @@
 [D-BUS Service]
-Name=Battery Input Manager
+Name=org.adishatz.Bim
 Exec=@SBIN_DIR@/bim
 User=root
