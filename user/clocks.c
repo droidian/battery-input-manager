@@ -126,8 +126,7 @@ clocks_set_property (GObject *object,
     switch (property_id) {
         case PROP_SIMULATE:
             self->priv->simulate = g_value_get_boolean (value);
-            if (self->priv->simulate)
-                clocks_connect_settings (self);
+            clocks_connect_settings (self);
             return;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
