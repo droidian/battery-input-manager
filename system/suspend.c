@@ -40,8 +40,8 @@ struct _SuspendPrivate {
     gint threshold_start;
     gint threshold_end;
 
-    guint64 next_alarm;
-    guint64 time_to_full;
+    gint64 next_alarm;
+    gint64 time_to_full;
 
     gint percentage;
     gint previous_percentage;
@@ -224,8 +224,10 @@ log_percentage (Suspend *self) {
 static void
 handle_time_to_full (Suspend  *self,
                      GVariant *data) {
-    if (!self->priv->suspended)
+    if (!self->priv->suspended) {
         self->priv->time_to_full = g_variant_get_int64 (data);
+        g_message("Time to full: %ld", self->priv->time_to_full);
+    }
 }
 
 
