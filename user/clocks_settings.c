@@ -37,11 +37,17 @@ G_DEFINE_TYPE_WITH_CODE (ClocksSettings, clocks_settings, G_TYPE_OBJECT,
 static gboolean
 g_settings_schema_exist (const char * id)
 {
+    gboolean exist = FALSE;
     GSettingsSchema *res = g_settings_schema_source_lookup (
         g_settings_schema_source_get_default(), id, FALSE
     );
 
-    return res != NULL;
+    if (res != NULL) {
+        g_free (res);
+        exist = TRUE;
+    }
+
+    return exist;
 }
 
 
@@ -104,18 +110,21 @@ clocks_settings_init (ClocksSettings *self)
     self->priv->k_settings = NULL;
     self->priv->file_monitor = NULL;
 
-    if (!g_settings_schema_exist (CLOCKS_ID)) {
+    if (g_settings_schema_exist (CLOCKS_ID)) {
         self->priv->g_settings = g_settings_new (CLOCKS_ID);
     } else {
         g_autoptr(GStrvBuilder) builder = g_strv_builder_new ();
         g_autoptr(GError) error = NULL;
         g_autofree gchar *filepath;
+        const g_autofree gchar *homedir;
         GStrv strv;
 
-        g_strv_builder_add (builder, g_get_home_dir ());
+        homedir = g_get_home_dir ();
+        g_strv_builder_add (builder, homedir);
         g_strv_builder_add (builder, KEY_FILE);
         strv = g_strv_builder_end (builder);
         filepath = g_strjoinv ("/", strv);
+        g_strfreev (strv);
 
         if (g_file_test (filepath, G_FILE_TEST_EXISTS)) {
             self->priv->k_settings = g_file_new_for_path (filepath);
@@ -173,13 +182,17 @@ GVariant
         return g_settings_get_value (self->priv->g_settings, CLOCKS_KEY);
     } else {
         GVariant *alarms;
+        g_autoptr(GVariantType) type;
         g_autoptr(GKeyFile) key_file;
         g_autoptr(GError) error = NULL;
-        gchar *data;
+        g_autofree gchar *data;
+        g_autofree gchar *filepath;
 
         key_file = g_key_file_new ();
+        filepath = g_file_get_path (self->priv->k_settings);
+
         if (!g_key_file_load_from_file (key_file,
-                                        g_file_get_path (self->priv->k_settings),
+                                        filepath,
                                         G_KEY_FILE_NONE,
                                         &error)) {
             g_warning ("Error loading Clocks settings: %s", error->message);
@@ -198,8 +211,9 @@ GVariant
             return NULL;
         }
 
+        type = g_variant_type_new ("aa{sv}");
         alarms = g_variant_parse (
-            g_variant_type_new ("aa{sv}"),
+            type,
             data,
             NULL,
             NULL,

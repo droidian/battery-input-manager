@@ -50,6 +50,7 @@ remove_alarm (Clocks   *self,
         if (g_strcmp0 (id, clock_id) == 0) {
             g_message("Removing alarm: %s", id);
             self->priv->alarms = g_list_remove (self->priv->alarms, id);
+            g_free (id);
             break;
         }
     };
@@ -64,9 +65,9 @@ update_alarm (Clocks   *self,
     GVariantIter alarm_iter;
     gchar *alarm_key;
     GVariant *alarm_value;
-    const gchar *clock_id = NULL;
-    const gchar *new_clock_id = NULL;
-    const gchar *ring_time = NULL;
+    gchar *clock_id;
+    g_autofree gchar *new_clock_id = NULL;
+    g_autofree gchar *ring_time = NULL;
     gboolean alarm_exists = FALSE;
 
     g_variant_iter_init (&alarm_iter, alarm);
@@ -75,9 +76,14 @@ update_alarm (Clocks   *self,
             g_variant_get (alarm_value, "s", &ring_time);
         else if (g_strcmp0 (alarm_key, "id") == 0)
             g_variant_get (alarm_value, "s", &new_clock_id);
+
+        g_variant_unref (alarm_value);
+        g_free (alarm_key);
     }
 
-    g_return_if_fail (new_clock_id != NULL);
+    if (new_clock_id == NULL) {
+        return;
+    }
 
     GFOREACH (self->priv->alarms, clock_id) {
         if (g_strcmp0 (clock_id, new_clock_id) == 0) {
