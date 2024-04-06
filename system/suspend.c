@@ -251,8 +251,9 @@ static void
 handle_percentage (Suspend  *self,
                    GVariant *data) {
     self->priv->previous_percentage = self->priv->percentage;
-
     self->priv->percentage = (gint32) g_variant_get_double (data);
+
+    log_percentage (self);
 }
 
 
