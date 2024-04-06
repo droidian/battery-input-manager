@@ -2,8 +2,8 @@
  * Copyright Cedric Bellegarde <cedric.bellegarde@adishatz.org>
  */
 
-#ifndef DBUS_H
-#define DBUS_H
+#ifndef CLOCKS_H
+#define CLOCKS_H
 
 #include <glib.h>
 #include <glib-object.h>

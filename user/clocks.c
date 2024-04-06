@@ -5,6 +5,7 @@
 #include <gio/gio.h>
 
 #include "clocks.h"
+#include "clocks_settings.h"
 #include "config.h"
 #include "d-bus.h"
 #include "../common/utils.h"
@@ -18,7 +19,7 @@ enum {
 
 
 struct _ClocksPrivate {
-    GSettings *settings;
+    ClocksSettings *settings;
     GList *alarms;
     gboolean simulate;
 };
@@ -85,7 +86,6 @@ update_alarm (Clocks   *self,
         }
     };
 
-    g_message ("%p", ring_time);
     if (!alarm_exists && ring_time != NULL) {
         g_autoptr(GDateTime) datetime;
         gint64 timestamp;
@@ -123,15 +123,14 @@ add_fake_alarms (Clocks *self) {
 }
 
 static void
-on_alarms_changed (GSettings   *settings,
-                   const gchar *key,
+on_alarms_changed (ClocksSettings   *settings,
                    gpointer     user_data) {
     Clocks *self = CLOCKS (user_data);
     GVariant *alarms = NULL;
     GVariantIter alarms_iter;
     GVariant *alarm;
 
-    alarms = g_settings_get_value (settings, key);
+    alarms = clocks_settings_get_alarms (settings);
 
     if (alarms == NULL)
         return;
@@ -151,13 +150,12 @@ clocks_connect_settings (Clocks *self) {
     } else {
         g_signal_connect (
             self->priv->settings,
-            "changed::alarms",
+            "alarms-changed",
             G_CALLBACK (on_alarms_changed),
             self
         );
         on_alarms_changed (
             self->priv->settings,
-            "alarms",
             self
         );
     }
@@ -213,7 +211,6 @@ clocks_dispose (GObject *clocks)
     g_free (self->priv);
 
     G_OBJECT_CLASS (clocks_parent_class)->dispose (clocks);
-    g_warning("dispose");
 }
 
 static void
@@ -245,7 +242,8 @@ static void
 clocks_init (Clocks *self)
 {
     self->priv = clocks_get_instance_private (self);
-    self->priv->settings = g_settings_new (CLOCKS_ID);
+
+    self->priv->settings = CLOCKS_SETTINGS (clocks_settings_new ());
     self->priv->alarms = NULL;
 }
 

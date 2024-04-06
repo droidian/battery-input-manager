@@ -183,3 +183,4 @@ settings_get_default (void)
     }
     return g_object_ref (default_settings);
 }
+
