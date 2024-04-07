@@ -211,6 +211,9 @@ log_percentage (Suspend *self) {
     const gchar *status;
     gint64 timestamp;
 
+    if (self->priv->previous_percentage == 0)
+        return;
+
     datetime = g_date_time_new_now_utc ();
     timestamp = g_date_time_to_unix (datetime);
 
