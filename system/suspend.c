@@ -25,6 +25,8 @@
 #define REFRESH_RATE           600000
 #define REFRESH_RATE_SIMULATE  1000
 
+#define TIME_TO_FULL_DELTA     600
+
 #define SIMULATE_CYCLE_START   70
 
 
@@ -43,6 +45,7 @@ struct _SuspendPrivate {
 
     gint64 next_alarm;
     gint64 time_to_full;
+    gint64 previous_time_to_full;
 
     gint percentage;
     gint previous_percentage;
@@ -78,6 +81,7 @@ suspend_input (Suspend *self) {
 
     g_message ("Suspending input");
     self->priv->suspended = TRUE;
+    self->priv->previous_time_to_full = 0;
     fprintf (sysfs, "%d", settings_get_sysfs_suspend_input_value (settings));
 
     fclose (sysfs);
@@ -146,7 +150,8 @@ has_alarm_pending (Suspend *self) {
         datetime = g_date_time_new_now_utc ();
         timestamp = g_date_time_to_unix (datetime);
 
-        if (self->priv->next_alarm - timestamp < self->priv->time_to_full)
+        if (self->priv->next_alarm - timestamp <
+                self->priv->time_to_full + TIME_TO_FULL_DELTA)
             return TRUE;
     }
     return FALSE;
@@ -244,7 +249,14 @@ static void
 handle_time_to_full (Suspend  *self,
                      GVariant *data) {
     if (!self->priv->suspended) {
-        self->priv->time_to_full = g_variant_get_int64 (data);
+        if (self->priv->previous_time_to_full == 0) {
+            self->priv->time_to_full = g_variant_get_int64 (data);
+        } else {
+            self->priv->previous_time_to_full = self->priv->time_to_full;
+            self->priv->time_to_full = (
+                g_variant_get_int64 (data) + self->priv->previous_time_to_full
+            ) / 2;
+        }
         g_message("Time to full: %ld", self->priv->time_to_full);
     }
 }
@@ -475,6 +487,7 @@ suspend_init (Suspend *self)
 
     self->priv->next_alarm = 0;
     self->priv->time_to_full = 0;
+    self->priv->previous_time_to_full = 0;
 
     self->priv->threshold_max = INPUT_THRESHOLD_MAX;
     self->priv->threshold_start = INPUT_THRESHOLD_START;
