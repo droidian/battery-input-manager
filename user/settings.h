@@ -44,6 +44,7 @@ struct _SettingsClass {
 GType           settings_get_type                      (void) G_GNUC_CONST;
 Settings       *settings_get_default                   (void);
 GObject*        settings_new                           (void);
+gint            settings_get_resume_input_value        (Settings *settings);
 G_END_DECLS
 
 #endif

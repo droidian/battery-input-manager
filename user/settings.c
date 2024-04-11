@@ -137,3 +137,15 @@ settings_get_default (void)
     }
     return default_settings;
 }
+
+/**
+ * settings_get_resume_input_value:
+ *
+ * Get sysfs node value we need to write to resume input
+ *
+ * Returns: (transfer full): node value for resume
+ */
+gint
+settings_get_resume_input_value (Settings *settings) {
+    return  g_settings_get_int (settings->priv->settings, "threshold-start");
+}

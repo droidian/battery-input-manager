@@ -23,11 +23,11 @@
 
 #define REFRESH_RATE_START     10000
 #define REFRESH_RATE           600000
-#define REFRESH_RATE_SIMULATE  1000
+#define REFRESH_RATE_SIMULATE  10000
 
 #define TIME_TO_FULL_DELTA     600
 
-#define SIMULATE_CYCLE_START   70
+#define SIMULATE_CYCLE_START   79
 
 
 enum {
@@ -80,6 +80,12 @@ suspend_input (Suspend *self) {
     g_return_if_fail (sysfs != NULL);
 
     g_message ("Suspending input");
+    bim_bus_input_suspended (
+        bim_bus_get_default (),
+        TRUE,
+        self->priv->next_alarm - self->priv->time_to_full
+    );
+
     self->priv->suspended = TRUE;
     self->priv->previous_time_to_full = 0;
     fprintf (sysfs, "%d", settings_get_sysfs_suspend_input_value (settings));
@@ -101,6 +107,8 @@ resume_input (Suspend *self) {
     g_return_if_fail (sysfs != NULL);
 
     g_message ("Resuming input");
+    bim_bus_input_suspended (bim_bus_get_default (), FALSE, 0);
+
     self->priv->suspended = FALSE;
     fprintf (sysfs, "%d", settings_get_sysfs_resume_input_value (settings));
 
@@ -274,19 +282,14 @@ handle_percentage (Suspend  *self,
 
 static gboolean
 simulate_charging_cycle (Suspend *self) {
-    GRand *rand = g_rand_new ();
-
+    self->priv->previous_percentage = self->priv->percentage;
     if (self->priv->suspended)
         self->priv->percentage -= 1;
     else
         self->priv->percentage += 1;
 
-    self->priv->time_to_full =  g_rand_int_range (rand, 20, 40);
-
     log_percentage (self);
     handle_input (self);
-
-    g_free (rand);
 
     return TRUE;
 }
@@ -297,6 +300,11 @@ start_handling_input (Suspend *self) {
     g_clear_handle_id (&self->priv->handle_timeout_id, g_source_remove);
 
     if (self->priv->simulate) {
+        GRand *rand = g_rand_new ();
+
+        self->priv->time_to_full =  g_rand_int_range (rand, 20, 40);
+        g_free (rand);
+
         self->priv->handle_timeout_id = g_timeout_add (
             REFRESH_RATE_SIMULATE,
             (GSourceFunc) simulate_charging_cycle,

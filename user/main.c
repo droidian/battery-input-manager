@@ -14,6 +14,8 @@
 #include "d-bus.h"
 #include "settings.h"
 
+#include <glib/gi18n-lib.h>
+
 
 static GMainLoop *loop;
 
@@ -36,6 +38,10 @@ main (gint argc, gchar * argv[])
         {"version", 0, 0, G_OPTION_ARG_NONE, &version, "Show version"},
         {NULL}
     };
+
+    textdomain (GETTEXT_PACKAGE);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+    bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
 
     signal(SIGINT, sigint_handler);
 

@@ -351,3 +351,19 @@ bim_bus_get_next_alarm (BimBus *self) {
 
     return 0;
 }
+
+void
+bim_bus_input_suspended (BimBus *self,
+                         gboolean suspended,
+                         gint64   timestamp)
+{
+    g_dbus_connection_emit_signal (
+        self->priv->connection,
+        NULL,
+        DBUS_PATH,
+        DBUS_NAME,
+        "InputSuspended",
+        g_variant_new ("(bx)", suspended, timestamp),
+        NULL
+    );
+}

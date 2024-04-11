@@ -41,11 +41,13 @@ struct _BimBusClass {
     GObjectClass parent_class;
 };
 
-GType       bim_bus_get_type       (void) G_GNUC_CONST;
-BimBus     *bim_bus_get_default    (void);
-GObject*    bim_bus_new            (void);
-gint64      bim_bus_get_next_alarm (BimBus *self);
-
+GType       bim_bus_get_type        (void) G_GNUC_CONST;
+BimBus     *bim_bus_get_default     (void);
+GObject*    bim_bus_new             (void);
+gint64      bim_bus_get_next_alarm  (BimBus *self);
+void        bim_bus_input_suspended (BimBus *self,
+                                     gboolean suspended,
+                                     gint64   timestamp);
 G_END_DECLS
 
 #endif

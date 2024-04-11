@@ -44,7 +44,7 @@ add_alarm (Clocks   *self,
 static void
 remove_alarm (Clocks   *self,
               const gchar *clock_id) {
-    const gchar *id;
+    gchar *id;
 
     GFOREACH (self->priv->alarms, id) {
         if (g_strcmp0 (id, clock_id) == 0) {
