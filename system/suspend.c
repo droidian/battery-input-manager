@@ -22,10 +22,11 @@
 #define INPUT_THRESHOLD_MAX    100
 
 #define REFRESH_RATE_START     10000
-#define REFRESH_RATE           600000
+#define REFRESH_RATE           300000
 #define REFRESH_RATE_SIMULATE  10000
 
-#define TIME_TO_FULL_DELTA     600
+#define TIME_TO_FULL_DELTA     1200
+#define MIN_TIME_TO_FULL       1000
 
 #define SIMULATE_CYCLE_START   79
 
@@ -265,6 +266,11 @@ handle_time_to_full (Suspend  *self,
                 g_variant_get_int64 (data) + self->priv->previous_time_to_full
             ) / 2;
         }
+
+        if (self->priv->time_to_full < MIN_TIME_TO_FULL) {
+            self->priv->time_to_full = MIN_TIME_TO_FULL;
+        }
+
         g_message("Time to full: %ld", self->priv->time_to_full);
     }
 }
