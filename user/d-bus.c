@@ -62,7 +62,7 @@ show_notification (BimBus *self,
     if (!suspended)
         return;
 
-    if (timestamp != 0) {
+    if (timestamp > 0) {
         g_autoptr(GDateTime) datetime;
 
         datetime = g_date_time_new_from_unix_local (timestamp);
