@@ -283,6 +283,11 @@ handle_percentage (Suspend  *self,
     self->priv->percentage = (gint32) g_variant_get_double (data);
 
     log_percentage (self);
+
+    if (self->priv->percentage == self->priv->threshold_start ||
+            self->priv->percentage == self->priv->threshold_end ||
+            self->priv->percentage == self->priv->threshold_max)
+        handle_input (self);
 }
 
 
