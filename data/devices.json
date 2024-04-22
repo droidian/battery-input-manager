@@ -15,11 +15,6 @@
         "resume": 100
     },
     {
-        "path": "/tmp/input_limit",
-        "suspend": -1,
-        "resume": -1
-    },
-    {
         "path": "/tmp/input_suspend",
         "suspend": 1,
         "resume": 0
