@@ -72,6 +72,7 @@ static void
 suspend_input (Suspend *self) {
     Settings *settings = settings_get_default ();
     FILE *sysfs;
+    gint suspend_value;
 
     sysfs = fopen(
         settings_get_sysfs_suspend_input_path (settings),
@@ -79,6 +80,8 @@ suspend_input (Suspend *self) {
     );
 
     g_return_if_fail (sysfs != NULL);
+
+    suspend_value = settings_get_sysfs_suspend_input_value (settings);
 
     g_message ("Suspending input");
     bim_bus_input_suspended (
@@ -89,8 +92,10 @@ suspend_input (Suspend *self) {
 
     self->priv->suspended = TRUE;
     self->priv->previous_time_to_full = 0;
-    fprintf (sysfs, "%d", settings_get_sysfs_suspend_input_value (settings));
-
+    if (suspend_value == -1)
+        fprintf (sysfs, "%d", self->priv->threshold_start);
+    else
+        fprintf (sysfs, "%d", suspend_value);
     fclose (sysfs);
 }
 
