@@ -160,12 +160,19 @@ has_alarm_pending (Suspend *self) {
             self->priv->time_to_full != 0) {
         g_autoptr(GDateTime) datetime;
         gint64 timestamp;
+        gint64 time_to_threshold_max = self->priv->time_to_full +
+            TIME_TO_FULL_DELTA;
 
         datetime = g_date_time_new_now_utc ();
         timestamp = g_date_time_to_unix (datetime);
 
-        if (self->priv->next_alarm - timestamp <
-                self->priv->time_to_full + TIME_TO_FULL_DELTA)
+        if (self->priv->threshold_max != 100) {
+            time_to_threshold_max = self->priv->time_to_full / (
+                100 - self->priv->percentage
+            ) * (100 - self->priv->threshold_max);
+        }
+
+        if (self->priv->next_alarm - timestamp < time_to_threshold_max)
             return TRUE;
     }
     return FALSE;
@@ -288,6 +295,13 @@ handle_percentage (Suspend  *self,
     self->priv->percentage = (gint32) g_variant_get_double (data);
 
     log_percentage (self);
+
+    // We will need some more time to full
+    if (self->priv->percentage < self->priv->previous_percentage) {
+        self->priv->time_to_full += self->priv->time_to_full / (
+             100 - self->priv->previous_percentage
+        );
+    }
 
     if (self->priv->percentage == self->priv->threshold_start ||
             self->priv->percentage == self->priv->threshold_end ||
