@@ -50,6 +50,7 @@ hide_notification (BimBus *self) {
     return FALSE;
 }
 
+
 static void
 show_notification (BimBus *self,
                    gboolean suspended,
@@ -109,6 +110,7 @@ show_notification (BimBus *self,
     }
 }
 
+
 static void
 on_bim_input_suspended (GDBusProxy  *proxy,
                         const gchar *sender_name,
@@ -128,6 +130,7 @@ on_bim_input_suspended (GDBusProxy  *proxy,
     }
 }
 
+
 static void
 bim_bus_dispose (GObject *bim_bus)
 {
@@ -140,6 +143,14 @@ bim_bus_dispose (GObject *bim_bus)
     G_OBJECT_CLASS (bim_bus_parent_class)->dispose (bim_bus);
 }
 
+
+static void
+bim_bus_finalize (GObject *bim_bus)
+{
+    G_OBJECT_CLASS (bim_bus_parent_class)->finalize (bim_bus);
+}
+
+
 static void
 bim_bus_class_init (BimBusClass *klass)
 {
@@ -147,6 +158,7 @@ bim_bus_class_init (BimBusClass *klass)
 
     object_class = G_OBJECT_CLASS (klass);
     object_class->dispose = bim_bus_dispose;
+    object_class->finalize = bim_bus_finalize;
 }
 
 static void

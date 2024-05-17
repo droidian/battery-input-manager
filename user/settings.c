@@ -48,12 +48,20 @@ settings_dispose (GObject *settings)
 
 
 static void
+settings_finalize (GObject *settings)
+{
+    G_OBJECT_CLASS (settings_parent_class)->finalize (settings);
+}
+
+
+static void
 settings_class_init (SettingsClass *klass)
 {
     GObjectClass *object_class;
 
     object_class = G_OBJECT_CLASS (klass);
     object_class->dispose = settings_dispose;
+    object_class->finalize = settings_finalize;
 }
 
 

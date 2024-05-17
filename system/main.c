@@ -25,6 +25,8 @@ sigint_handler(int dummy) {
 gint
 main (gint argc, gchar * argv[])
 {
+    Suspend *suspend;
+
     GResource *resource;
     g_autoptr (GOptionContext) context = NULL;
     g_autoptr (GError) error = NULL;
@@ -55,12 +57,13 @@ main (gint argc, gchar * argv[])
     g_resources_register (resource);
 
     bim_bus_get_default ();
-    suspend_new (simulate);
+    suspend = SUSPEND (suspend_new (simulate));
 
     loop = g_main_loop_new (NULL, FALSE);
     g_main_loop_run (loop);
 
     g_clear_pointer (&loop, g_main_loop_unref);
+    g_clear_object (&suspend);
 
     return EXIT_SUCCESS;
 }

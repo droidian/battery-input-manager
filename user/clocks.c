@@ -128,6 +128,7 @@ add_fake_alarms (Clocks *self) {
     g_free (rand);
 }
 
+
 static void
 on_alarms_changed (ClocksSettings   *settings,
                    gpointer     user_data) {
@@ -148,6 +149,7 @@ on_alarms_changed (ClocksSettings   *settings,
     }
     g_variant_unref (alarms);
 }
+
 
 static void
 clocks_connect_settings (Clocks *self) {
@@ -207,6 +209,7 @@ clocks_get_property (GObject *object,
     }
 }
 
+
 static void
 clocks_dispose (GObject *clocks)
 {
@@ -214,10 +217,17 @@ clocks_dispose (GObject *clocks)
 
     g_list_free_full (self->priv->alarms, g_free);
     g_clear_object (&self->priv->settings);
-    g_free (self->priv);
 
     G_OBJECT_CLASS (clocks_parent_class)->dispose (clocks);
 }
+
+
+static void
+clocks_finalize (GObject *clocks)
+{
+    G_OBJECT_CLASS (clocks_parent_class)->finalize (clocks);
+}
+
 
 static void
 clocks_class_init (ClocksClass *klass)
@@ -226,6 +236,7 @@ clocks_class_init (ClocksClass *klass)
 
     object_class = G_OBJECT_CLASS (klass);
     object_class->dispose = clocks_dispose;
+    object_class->finalize = clocks_finalize;
     object_class->set_property = clocks_set_property;
     object_class->get_property = clocks_get_property;
 
@@ -244,6 +255,7 @@ clocks_class_init (ClocksClass *klass)
     );
 }
 
+
 static void
 clocks_init (Clocks *self)
 {
@@ -252,6 +264,7 @@ clocks_init (Clocks *self)
     self->priv->settings = CLOCKS_SETTINGS (clocks_settings_new ());
     self->priv->alarms = NULL;
 }
+
 
 /**
  * clocks_new:
@@ -270,6 +283,7 @@ clocks_new (gboolean simulate)
 
     return clocks;
 }
+
 
 static Clocks *default_clocks = NULL;
 /**

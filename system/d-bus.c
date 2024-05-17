@@ -200,10 +200,17 @@ bim_bus_dispose (GObject *bim_bus)
     g_clear_pointer (&self->priv->introspection_data, g_dbus_node_info_unref);
     g_clear_object (&self->priv->connection);
 
-    g_free (self->priv);
-
     G_OBJECT_CLASS (bim_bus_parent_class)->dispose (bim_bus);
 }
+
+
+static void
+bim_bus_finalize (GObject *bim_bus)
+{
+    g_message ("plop");
+    G_OBJECT_CLASS (bim_bus_parent_class)->finalize (bim_bus);
+}
+
 
 static void
 bim_bus_class_init (BimBusClass *klass)
@@ -214,6 +221,7 @@ bim_bus_class_init (BimBusClass *klass)
     object_class->set_property = bim_bus_set_property;
     object_class->get_property = bim_bus_get_property;
     object_class->dispose = bim_bus_dispose;
+    object_class->finalize = bim_bus_finalize;
 
     signals[ALARM_ADDED] = g_signal_new (
         "alarm-added",

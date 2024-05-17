@@ -76,10 +76,16 @@ clocks_settings_dispose (GObject *clocks_settings)
     if (self->priv->file_monitor != NULL)
         g_clear_object (&self->priv->file_monitor);
 
-    g_free (self->priv);
-
     G_OBJECT_CLASS (clocks_settings_parent_class)->dispose (clocks_settings);
 }
+
+
+static void
+clocks_settings_finalize (GObject *clocks_settings)
+{
+    G_OBJECT_CLASS (clocks_settings_parent_class)->finalize (clocks_settings);
+}
+
 
 
 static void
@@ -89,6 +95,7 @@ clocks_settings_class_init (ClocksSettingsClass *klass)
 
     object_class = G_OBJECT_CLASS (klass);
     object_class->dispose = clocks_settings_dispose;
+    object_class->finalize = clocks_settings_finalize;
 
     signals[ALARMS_CHANGED] = g_signal_new (
         "alarms-changed",

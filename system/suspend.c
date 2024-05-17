@@ -482,11 +482,17 @@ suspend_dispose (GObject *suspend)
 
     if (!self->priv->simulate)
         g_clear_object (&self->priv->upower_proxy);
-    
-    g_free (self->priv);
 
     G_OBJECT_CLASS (suspend_parent_class)->dispose (suspend);
 }
+
+
+static void
+suspend_finalize (GObject *suspend)
+{
+    G_OBJECT_CLASS (suspend_parent_class)->finalize (suspend);
+}
+
 
 static void
 suspend_class_init (SuspendClass *klass)
@@ -495,6 +501,7 @@ suspend_class_init (SuspendClass *klass)
 
     object_class = G_OBJECT_CLASS (klass);
     object_class->dispose = suspend_dispose;
+    object_class->finalize = suspend_finalize;
     object_class->set_property = suspend_set_property;
     object_class->get_property = suspend_get_property;
 
