@@ -4,6 +4,8 @@ Battery Input Manager suspends battery input to save battery health.
 
 ## Settings ##
 
+![Bim Settings](https://adishatz.org/data/bim.png)
+
 To enable service:
 
 `$ systemctl --user enable --now battery-input-manager`
