@@ -12,7 +12,6 @@
 #define DBUS_NAME "org.adishatz.Bim"
 #define DBUS_PATH "/org/adishatz/Bim"
 
-
 /* signals */
 enum
 {
@@ -24,7 +23,6 @@ enum
 
 static guint signals[LAST_SIGNAL];
 
-
 struct _BimBusPrivate {
     GDBusConnection *connection;
     GDBusNodeInfo *introspection_data;
@@ -35,7 +33,6 @@ struct _BimBusPrivate {
 
 G_DEFINE_TYPE_WITH_CODE (BimBus, bim_bus, G_TYPE_OBJECT,
     G_ADD_PRIVATE (BimBus))
-
 
 static gint
 sort_alarms (gconstpointer a,
@@ -51,7 +48,6 @@ sort_alarms (gconstpointer a,
 
     return a_time - b_time;
 }
-
 
 static void
 handle_method_call (GDBusConnection *connection,
@@ -160,7 +156,6 @@ on_name_acquired (GDBusConnection *connection,
                   gpointer         user_data)
 {}
 
-
 static void
 on_name_lost (GDBusConnection *connection,
               const gchar *name,
@@ -211,14 +206,12 @@ bim_bus_dispose (GObject *bim_bus)
     G_OBJECT_CLASS (bim_bus_parent_class)->dispose (bim_bus);
 }
 
-
 static void
 bim_bus_finalize (GObject *bim_bus)
 {
     g_message ("plop");
     G_OBJECT_CLASS (bim_bus_parent_class)->finalize (bim_bus);
 }
-
 
 static void
 bim_bus_class_init (BimBusClass *klass)
@@ -336,7 +329,6 @@ bim_bus_get_default (void)
     }
     return g_object_ref (default_bim_bus);
 }
-
 
 /**
  * bim_bus_get_next_alarm:

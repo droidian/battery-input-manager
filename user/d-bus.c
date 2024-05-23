@@ -25,10 +25,8 @@ struct _BimBusPrivate {
     guint notification_id;
 };
 
-
 G_DEFINE_TYPE_WITH_CODE (BimBus, bim_bus, G_TYPE_OBJECT,
     G_ADD_PRIVATE (BimBus))
-
 
 static gboolean
 hide_notification (BimBus *self) {
@@ -49,7 +47,6 @@ hide_notification (BimBus *self) {
 
     return FALSE;
 }
-
 
 static void
 show_notification (BimBus *self,
@@ -110,7 +107,6 @@ show_notification (BimBus *self,
     }
 }
 
-
 static void
 on_bim_input_suspended (GDBusProxy  *proxy,
                         const gchar *sender_name,
@@ -142,13 +138,11 @@ bim_bus_dispose (GObject *bim_bus)
     G_OBJECT_CLASS (bim_bus_parent_class)->dispose (bim_bus);
 }
 
-
 static void
 bim_bus_finalize (GObject *bim_bus)
 {
     G_OBJECT_CLASS (bim_bus_parent_class)->finalize (bim_bus);
 }
-
 
 static void
 bim_bus_class_init (BimBusClass *klass)
@@ -260,7 +254,6 @@ bim_bus_close_proxy (BimBus *self)
     g_clear_object (&self->priv->bim_proxy);
 }
 
-
 /**
  * bim_bus_add_alarm:
  *
@@ -293,7 +286,6 @@ bim_bus_add_alarm (BimBus      *self,
         g_warning ("Error adding an alarm: %s", error->message);
 }
 
-
 /**
  * bim_bus_remove_alarm:
  *
@@ -322,7 +314,6 @@ bim_bus_remove_alarm (BimBus      *self,
     if (error != NULL)
         g_warning ("Error removing alarms: %s", error->message);
 }
-
 
 /**
  * bim_bus_set_value:
@@ -353,7 +344,6 @@ bim_bus_set_value (BimBus *self, const gchar *key, gint value) {
     if (error != NULL)
         g_warning ("Error updating setting: %s", error->message);
 }
-
 
 static BimBus *default_bim_bus = NULL;
 /**

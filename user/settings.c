@@ -8,11 +8,9 @@
 #include "settings.h"
 #include "config.h"
 
-
 struct _SettingsPrivate {
     GSettings *settings;
 };
-
 
 G_DEFINE_TYPE_WITH_CODE (
     Settings,
@@ -20,7 +18,6 @@ G_DEFINE_TYPE_WITH_CODE (
     G_TYPE_OBJECT,
     G_ADD_PRIVATE (Settings)
 )
-
 
 static void
 on_threshold_changed (GSettings   *settings,
@@ -78,13 +75,11 @@ settings_dispose (GObject *settings)
     G_OBJECT_CLASS (settings_parent_class)->dispose (settings);
 }
 
-
 static void
 settings_finalize (GObject *settings)
 {
     G_OBJECT_CLASS (settings_parent_class)->finalize (settings);
 }
-
 
 static void
 settings_class_init (SettingsClass *klass)
@@ -95,7 +90,6 @@ settings_class_init (SettingsClass *klass)
     object_class->dispose = settings_dispose;
     object_class->finalize = settings_finalize;
 }
-
 
 static void
 settings_init (Settings *self)
@@ -141,7 +135,6 @@ settings_init (Settings *self)
     );
 }
 
-
 /**
  * settings_new:
  *
@@ -159,7 +152,6 @@ settings_new (void)
 
     return settings;
 }
-
 
 static Settings *default_settings = NULL;
 /**

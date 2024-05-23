@@ -21,7 +21,6 @@ G_DEFINE_TYPE_WITH_CODE (
     G_ADD_PRIVATE (Settings)
 )
 
-
 static void
 settings_dispose (GObject *settings)
 {
@@ -32,13 +31,11 @@ settings_dispose (GObject *settings)
     G_OBJECT_CLASS (settings_parent_class)->dispose (settings);
 }
 
-
 static void
 settings_finalize (GObject *settings)
 {
     G_OBJECT_CLASS (settings_parent_class)->finalize (settings);
 }
-
 
 static void
 settings_class_init (SettingsClass *klass)
@@ -173,7 +170,6 @@ gint
 settings_get_sysfs_resume_input_value (Settings *settings) {
     return settings->priv->sysfs_resume_input_value;
 }
-
 
 static Settings *default_settings = NULL;
 /**

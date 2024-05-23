@@ -12,7 +12,6 @@
 #define CLOCKS_KEY "alarms"
 #define KEY_FILE ".var/app/org.gnome.clocks/config/glib-2.0/settings/keyfile"
 
-
 /* signals */
 enum
 {
@@ -22,17 +21,14 @@ enum
 
 static guint signals[LAST_SIGNAL];
 
-
 struct _ClocksSettingsPrivate {
     GSettings *g_settings;
     GFile *k_settings;
     GFileMonitor *file_monitor;
 };
 
-
 G_DEFINE_TYPE_WITH_CODE (ClocksSettings, clocks_settings, G_TYPE_OBJECT,
     G_ADD_PRIVATE (ClocksSettings))
-
 
 static gboolean
 g_settings_schema_exist (const char * id)
@@ -50,7 +46,6 @@ g_settings_schema_exist (const char * id)
     return exist;
 }
 
-
 static void
 on_keyfile_changed (GFileMonitor   *file_monitor,
                     GFile *file,
@@ -62,7 +57,6 @@ on_keyfile_changed (GFileMonitor   *file_monitor,
     if (event & G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
         g_signal_emit(self, signals[ALARMS_CHANGED], 0);
 }
-
 
 static void
 clocks_settings_dispose (GObject *clocks_settings)
@@ -79,14 +73,11 @@ clocks_settings_dispose (GObject *clocks_settings)
     G_OBJECT_CLASS (clocks_settings_parent_class)->dispose (clocks_settings);
 }
 
-
 static void
 clocks_settings_finalize (GObject *clocks_settings)
 {
     G_OBJECT_CLASS (clocks_settings_parent_class)->finalize (clocks_settings);
 }
-
-
 
 static void
 clocks_settings_class_init (ClocksSettingsClass *klass)
@@ -107,7 +98,6 @@ clocks_settings_class_init (ClocksSettingsClass *klass)
         0
     );
 }
-
 
 static void
 clocks_settings_init (ClocksSettings *self)
@@ -155,7 +145,6 @@ clocks_settings_init (ClocksSettings *self)
     }
 }
 
-
 /**
  * clocks_settings_new:
  *
@@ -173,7 +162,6 @@ clocks_settings_new (void)
 
     return clocks_settings;
 }
-
 
 /**
  * clocks_settings_get_alarms:

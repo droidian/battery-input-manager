@@ -17,17 +17,14 @@ enum {
     PROP_SIMULATE
 };
 
-
 struct _ClocksPrivate {
     ClocksSettings *settings;
     GList *alarms;
     gboolean simulate;
 };
 
-
 G_DEFINE_TYPE_WITH_CODE (Clocks, clocks, G_TYPE_OBJECT,
     G_ADD_PRIVATE (Clocks))
-
 
 static void
 add_alarm (Clocks   *self,
@@ -39,7 +36,6 @@ add_alarm (Clocks   *self,
 
     bim_bus_add_alarm (bim_bus_get_default (), clock_id, timestamp);
 }
-
 
 static void
 remove_alarm (Clocks   *self,
@@ -57,7 +53,6 @@ remove_alarm (Clocks   *self,
 
     bim_bus_remove_alarm (bim_bus_get_default (), clock_id);
 }
-
 
 static void
 update_alarm (Clocks   *self,
@@ -104,7 +99,6 @@ update_alarm (Clocks   *self,
     }
 }
 
-
 static void
 add_fake_alarms (Clocks *self) {
     g_autoptr(GDateTime) datetime;
@@ -128,7 +122,6 @@ add_fake_alarms (Clocks *self) {
     g_free (rand);
 }
 
-
 static void
 on_alarms_changed (ClocksSettings   *settings,
                    gpointer     user_data) {
@@ -150,7 +143,6 @@ on_alarms_changed (ClocksSettings   *settings,
     g_variant_unref (alarms);
 }
 
-
 static void
 clocks_connect_settings (Clocks *self) {
     if (self->priv->simulate) {
@@ -168,7 +160,6 @@ clocks_connect_settings (Clocks *self) {
         );
     }
 }
-
 
 static void
 clocks_set_property (GObject *object,
@@ -189,7 +180,6 @@ clocks_set_property (GObject *object,
     }
 }
 
-
 static void
 clocks_get_property (GObject *object,
                      guint property_id,
@@ -209,7 +199,6 @@ clocks_get_property (GObject *object,
     }
 }
 
-
 static void
 clocks_dispose (GObject *clocks)
 {
@@ -221,13 +210,11 @@ clocks_dispose (GObject *clocks)
     G_OBJECT_CLASS (clocks_parent_class)->dispose (clocks);
 }
 
-
 static void
 clocks_finalize (GObject *clocks)
 {
     G_OBJECT_CLASS (clocks_parent_class)->finalize (clocks);
 }
-
 
 static void
 clocks_class_init (ClocksClass *klass)
@@ -239,7 +226,6 @@ clocks_class_init (ClocksClass *klass)
     object_class->finalize = clocks_finalize;
     object_class->set_property = clocks_set_property;
     object_class->get_property = clocks_get_property;
-
 
     g_object_class_install_property (
         object_class,
@@ -255,7 +241,6 @@ clocks_class_init (ClocksClass *klass)
     );
 }
 
-
 static void
 clocks_init (Clocks *self)
 {
@@ -264,7 +249,6 @@ clocks_init (Clocks *self)
     self->priv->settings = CLOCKS_SETTINGS (clocks_settings_new ());
     self->priv->alarms = NULL;
 }
-
 
 /**
  * clocks_new:
@@ -283,7 +267,6 @@ clocks_new (gboolean simulate)
 
     return clocks;
 }
-
 
 static Clocks *default_clocks = NULL;
 /**

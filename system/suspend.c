@@ -11,11 +11,9 @@
 #include "settings.h"
 #include "suspend.h"
 
-
 #define UPOWER_DBUS_NAME       "org.freedesktop.UPower"
 #define UPOWER_DBUS_PATH       "/org/freedesktop/UPower/devices/DisplayDevice"
 #define UPOWER_DBUS_INTERFACE  "org.freedesktop.UPower.Device"
-
 
 #define INPUT_THRESHOLD_START  60
 #define INPUT_THRESHOLD_END    80
@@ -30,12 +28,10 @@
 
 #define SIMULATE_CYCLE_START   79
 
-
 enum {
     PROP_0,
     PROP_SIMULATE
 };
-
 
 struct _SuspendPrivate {
     GDBusProxy *upower_proxy;
@@ -59,14 +55,12 @@ struct _SuspendPrivate {
     gboolean simulate;
 };
 
-
 G_DEFINE_TYPE_WITH_CODE (
     Suspend,
     suspend,
     G_TYPE_OBJECT,
     G_ADD_PRIVATE (Suspend)
 )
-
 
 static void
 suspend_input (Suspend *self) {
@@ -99,7 +93,6 @@ suspend_input (Suspend *self) {
     fclose (sysfs);
 }
 
-
 static void
 resume_input (Suspend *self) {
     Settings *settings = settings_get_default ();
@@ -131,7 +124,6 @@ handle_input_threshold_start (Suspend *self) {
     return FALSE;
 }
 
-
 static gboolean
 handle_input_threshold_end (Suspend *self) {
     if (self->priv->percentage >= self->priv->threshold_end) {
@@ -141,7 +133,6 @@ handle_input_threshold_end (Suspend *self) {
     }
     return FALSE;
 }
-
 
 static gboolean
 handle_input_threshold_max (Suspend *self) {
@@ -187,7 +178,6 @@ handle_input_threshold_alarm (Suspend *self) {
     return FALSE;
 }
 
-
 static void
 handle_input (Suspend *self) {
     if (self->priv->suspended) {
@@ -216,7 +206,6 @@ handle_input (Suspend *self) {
     }
 }
 
-
 static gboolean
 handle_input_timeout (Suspend *self) {
     handle_input (self);
@@ -229,7 +218,6 @@ handle_input_timeout (Suspend *self) {
 
     return FALSE;
 }
-
 
 static void
 log_percentage (Suspend *self) {
@@ -265,7 +253,6 @@ log_percentage (Suspend *self) {
     }
 }
 
-
 static void
 handle_time_to_full (Suspend  *self,
                      GVariant *data) {
@@ -286,7 +273,6 @@ handle_time_to_full (Suspend  *self,
         g_message("Time to full: %ld", self->priv->time_to_full);
     }
 }
-
 
 static void
 handle_percentage (Suspend  *self,
@@ -309,7 +295,6 @@ handle_percentage (Suspend  *self,
         handle_input (self);
 }
 
-
 static gboolean
 simulate_charging_cycle (Suspend *self) {
     self->priv->previous_percentage = self->priv->percentage;
@@ -323,7 +308,6 @@ simulate_charging_cycle (Suspend *self) {
 
     return TRUE;
 }
-
 
 static void
 start_handling_input (Suspend *self) {
@@ -349,7 +333,6 @@ start_handling_input (Suspend *self) {
     }
 }
 
-
 static void
 on_upower_proxy_properties (GDBusProxy  *proxy,
                             GVariant    *changed_properties,
@@ -373,7 +356,6 @@ on_upower_proxy_properties (GDBusProxy  *proxy,
     }
 }
 
-
 static void
 on_alarm_updated (BimBus  *bim_bus,
                   gpointer user_data) {
@@ -381,7 +363,6 @@ on_alarm_updated (BimBus  *bim_bus,
 
     self->priv->next_alarm = bim_bus_get_next_alarm (bim_bus);
 }
-
 
 static void
 on_setting_changed (BimBus   *bim_bus,
@@ -401,7 +382,6 @@ on_setting_changed (BimBus   *bim_bus,
 
     start_handling_input (self);
 }
-
 
 static void
 suspend_connect_upower (Suspend *self) {
@@ -453,7 +433,6 @@ suspend_set_property (GObject *object,
     }
 }
 
-
 static void
 suspend_get_property (GObject *object,
                       guint property_id,
@@ -486,13 +465,11 @@ suspend_dispose (GObject *suspend)
     G_OBJECT_CLASS (suspend_parent_class)->dispose (suspend);
 }
 
-
 static void
 suspend_finalize (GObject *suspend)
 {
     G_OBJECT_CLASS (suspend_parent_class)->finalize (suspend);
 }
-
 
 static void
 suspend_class_init (SuspendClass *klass)
