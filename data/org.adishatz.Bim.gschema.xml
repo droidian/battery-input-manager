@@ -2,6 +2,12 @@
 <schemalist gettext-domain="bim">
   <schema id="org.adishatz.Bim" path="/org/adishatz/Bim/">
 
+    <key name="enabled" type="b">
+      <default>true</default>
+      <summary>Enable input manager</summary>
+      <description>If enabled, Battery Input Manager will preserve battery health.</description>
+    </key>
+
     <key name="threshold-max" type="i">
       <default>100</default>
       <summary>Battery maximum threshold</summary>

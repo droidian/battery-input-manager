@@ -2,6 +2,8 @@
  * Copyright Cedric Bellegarde <cedric.bellegarde@adishatz.org>
  */
 
+#include <signal.h>
+
 #include <gio/gio.h>
 
 #include "d-bus.h"
@@ -114,6 +116,12 @@ handle_method_call (GDBusConnection *connection,
         g_dbus_method_invocation_return_value (
             invocation, NULL
         );
+    } else if (g_strcmp0 (method_name, "Quit") == 0) {
+        g_dbus_method_invocation_return_value (
+            invocation, NULL
+        );
+
+        raise (SIGINT);
     }
 }
 

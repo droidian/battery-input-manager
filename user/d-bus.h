@@ -44,6 +44,8 @@ struct _BimBusClass {
 GType       bim_bus_get_type       (void) G_GNUC_CONST;
 BimBus     *bim_bus_get_default    (void);
 GObject*    bim_bus_new            (void);
+void        bim_bus_open_proxy     (BimBus      *self);
+void        bim_bus_close_proxy    (BimBus      *self);
 void        bim_bus_add_alarm      (BimBus      *self,
                                     const gchar *alarm_id,
                                     gint64       time);

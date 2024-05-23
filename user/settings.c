@@ -34,6 +34,38 @@ on_threshold_changed (GSettings   *settings,
     bim_bus_set_value (bim_bus, key, value);
 }
 
+static void
+on_enabled_changed (GSettings   *settings,
+                    const gchar *key,
+                    gpointer     user_data)
+{
+    Settings *self = SETTINGS (user_data);
+
+    if (g_settings_get_boolean (self->priv->settings, "enabled")) {
+        bim_bus_open_proxy (bim_bus_get_default ());
+    } else {
+        bim_bus_close_proxy (bim_bus_get_default ());
+        return;
+    }
+
+    on_threshold_changed (
+        self->priv->settings,
+        "threshold-max",
+        self
+    );
+
+    on_threshold_changed (
+        self->priv->settings,
+        "threshold-start",
+        self
+    );
+
+    on_threshold_changed (
+        self->priv->settings,
+        "threshold-end",
+        self
+    );
+}
 
 static void
 settings_dispose (GObject *settings)
@@ -72,15 +104,25 @@ settings_init (Settings *self)
 
     self->priv->settings = g_settings_new (APP_ID);
 
+    if (g_settings_get_boolean (self->priv->settings, "enabled")) {
+        on_enabled_changed (
+            self->priv->settings,
+            "enabled",
+            self
+        );
+    }
+
+    g_signal_connect (
+        self->priv->settings,
+        "changed::enabled",
+        G_CALLBACK (on_enabled_changed),
+        self
+    );
+
     g_signal_connect (
         self->priv->settings,
         "changed::threshold-max",
         G_CALLBACK (on_threshold_changed),
-        self
-    );
-    on_threshold_changed (
-        self->priv->settings,
-        "threshold-max",
         self
     );
 
@@ -90,21 +132,11 @@ settings_init (Settings *self)
         G_CALLBACK (on_threshold_changed),
         self
     );
-    on_threshold_changed (
-        self->priv->settings,
-        "threshold-start",
-        self
-    );
 
     g_signal_connect (
         self->priv->settings,
         "changed::threshold-end",
         G_CALLBACK (on_threshold_changed),
-        self
-    );
-    on_threshold_changed (
-        self->priv->settings,
-        "threshold-end",
         self
     );
 }
@@ -147,6 +179,18 @@ settings_get_default (void)
 }
 
 /**
+ * settings_get_enabled:
+ *
+ * Check if BIM is enabled
+ *
+ * Returns: True if we need to preserve battery health
+ */
+gboolean
+settings_get_enabled (Settings *self) {
+    return  g_settings_get_boolean (self->priv->settings, "enabled");
+}
+
+/**
  * settings_get_resume_input_value:
  *
  * Get sysfs node value we need to write to resume input
@@ -154,6 +198,6 @@ settings_get_default (void)
  * Returns: (transfer full): node value for resume
  */
 gint
-settings_get_resume_input_value (Settings *settings) {
-    return  g_settings_get_int (settings->priv->settings, "threshold-start");
+settings_get_resume_input_value (Settings *self) {
+    return  g_settings_get_int (self->priv->settings, "threshold-start");
 }

@@ -15,7 +15,6 @@
 
 static GMainLoop *loop;
 
-
 static void
 sigint_handler(int dummy) {
     g_main_loop_quit (loop);

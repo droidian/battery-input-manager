@@ -38,6 +38,13 @@
         <arg direction='in' name='value' type='i'/>
       </method>
       <!--
+        Quit:
+
+        Quit the daemon
+      -->
+      <method name='Quit'>
+      </method>
+      <!--
         Suspended:
 
         Signal emitted when input has been suspended.

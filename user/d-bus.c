@@ -130,7 +130,6 @@ on_bim_input_suspended (GDBusProxy  *proxy,
     }
 }
 
-
 static void
 bim_bus_dispose (GObject *bim_bus)
 {
@@ -166,17 +165,6 @@ bim_bus_init (BimBus *self)
 {
     self->priv = bim_bus_get_instance_private (self);
 
-    self->priv->bim_proxy = g_dbus_proxy_new_for_bus_sync (
-        G_BUS_TYPE_SYSTEM,
-        0,
-        NULL,
-        DBUS_BIM_NAME,
-        DBUS_BIM_PATH,
-        DBUS_BIM_INTERFACE,
-        NULL,
-        NULL
-    );
-
     self->priv->notification_proxy = g_dbus_proxy_new_for_bus_sync (
         G_BUS_TYPE_SESSION,
         0,
@@ -187,14 +175,6 @@ bim_bus_init (BimBus *self)
         NULL,
         NULL
     );
-
-    if (self->priv->bim_proxy != NULL)
-        g_signal_connect (
-            self->priv->bim_proxy,
-            "g-signal",
-            G_CALLBACK (on_bim_input_suspended),
-            self
-        );
 }
 
 /**
@@ -218,6 +198,68 @@ bim_bus_new (void)
     return bim_bus;
 }
 
+/**
+ * bim_bus_open_proxy:
+ *
+ * Open proxy connection to remote bus
+ *
+ **/
+void
+bim_bus_open_proxy (BimBus *self)
+{
+    g_return_if_fail (self->priv->bim_proxy == NULL);
+
+    self->priv->bim_proxy = g_dbus_proxy_new_for_bus_sync (
+        G_BUS_TYPE_SYSTEM,
+        0,
+        NULL,
+        DBUS_BIM_NAME,
+        DBUS_BIM_PATH,
+        DBUS_BIM_INTERFACE,
+        NULL,
+        NULL
+    );
+
+    if (self->priv->bim_proxy != NULL)
+        g_signal_connect (
+            self->priv->bim_proxy,
+            "g-signal",
+            G_CALLBACK (on_bim_input_suspended),
+            self
+        );
+}
+
+/**
+ * bim_bus_close_proxy:
+ *
+ * Ask remote Bus to quit and close connection
+ *
+ *
+ **/
+void
+bim_bus_close_proxy (BimBus *self)
+{
+    g_autoptr (GError) error = NULL;
+    g_autoptr(GVariant) result = NULL;
+
+    g_return_if_fail (self->priv->bim_proxy != NULL);
+
+    result = g_dbus_proxy_call_sync (
+        self->priv->bim_proxy,
+        "Quit",
+        NULL,
+        G_DBUS_CALL_FLAGS_NONE,
+        -1,
+        NULL,
+        &error
+    );
+
+    if (error != NULL)
+        g_warning ("Bus can't quit: %s", error->message);
+
+    g_clear_object (&self->priv->bim_proxy);
+}
+
 
 /**
  * bim_bus_add_alarm:
@@ -234,6 +276,8 @@ bim_bus_add_alarm (BimBus      *self,
                    gint64       time) {
     g_autoptr (GError) error = NULL;
     g_autoptr(GVariant) result = NULL;
+
+    g_return_if_fail (self->priv->bim_proxy != NULL);
 
     result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
@@ -263,6 +307,8 @@ bim_bus_remove_alarm (BimBus      *self,
     g_autoptr (GError) error = NULL;
     g_autoptr(GVariant) result = NULL;
 
+    g_return_if_fail (self->priv->bim_proxy != NULL);
+
     result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
         "RemoveAlarm",
@@ -291,6 +337,8 @@ void
 bim_bus_set_value (BimBus *self, const gchar *key, gint value) {
     g_autoptr (GError) error = NULL;
     g_autoptr(GVariant) result = NULL;
+
+    g_return_if_fail (self->priv->bim_proxy != NULL);
 
     result = g_dbus_proxy_call_sync (
         self->priv->bim_proxy,
