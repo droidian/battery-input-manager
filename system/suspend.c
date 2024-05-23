@@ -25,7 +25,7 @@
 #define REFRESH_RATE           300000
 #define REFRESH_RATE_SIMULATE  10000
 
-#define TIME_TO_FULL_DELTA     1200
+#define TIME_TO_FULL_DELTA     1800
 #define MIN_TIME_TO_FULL       1000
 
 #define SIMULATE_CYCLE_START   79
