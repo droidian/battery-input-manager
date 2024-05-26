@@ -6,4 +6,4 @@ Type=exec
 ExecStart=@BIN_DIR@/bim
 
 [Install]
-WantedBy=default.target
+WantedBy=gnome-session-initialized.target
