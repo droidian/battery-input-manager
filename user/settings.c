@@ -4,6 +4,7 @@
 
 #include <gio/gio.h>
 
+#include "clocks.h"
 #include "d-bus.h"
 #include "settings.h"
 #include "config.h"
@@ -40,6 +41,7 @@ on_enabled_changed (GSettings   *settings,
 
     if (g_settings_get_boolean (self->priv->settings, "enabled")) {
         bim_bus_open_proxy (bim_bus_get_default ());
+        clocks_update (clocks_get_default (FALSE));
     } else {
         bim_bus_close_proxy (bim_bus_get_default ());
         return;

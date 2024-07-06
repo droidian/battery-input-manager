@@ -168,6 +168,8 @@ clocks_settings_new (void)
  *
  * Get alarms from Clocks
  *
+ * @self: #ClocksSettings
+ *
  * Returns: (transfer full): a new #GVariant or NULL;
  *
  **/

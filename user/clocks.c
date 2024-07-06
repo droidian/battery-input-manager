@@ -154,10 +154,6 @@ clocks_connect_settings (Clocks *self) {
             G_CALLBACK (on_alarms_changed),
             self
         );
-        on_alarms_changed (
-            self->priv->settings,
-            self
-        );
     }
 }
 
@@ -283,4 +279,20 @@ clocks_get_default (gboolean simulate)
         default_clocks = CLOCKS (clocks_new (simulate));
     }
     return default_clocks;
+}
+
+/**
+ * clocks_update:
+ *
+ * Update available alarms
+ *
+ * @self: #Clocks
+ */
+void
+clocks_update (Clocks *self)
+{
+    on_alarms_changed (
+        self->priv->settings,
+        self
+    );
 }
