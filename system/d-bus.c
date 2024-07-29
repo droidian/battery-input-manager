@@ -67,7 +67,7 @@ handle_method_call (GDBusConnection *connection,
 
         g_variant_get (parameters, "(&sx)", &alarm_id, &timestamp);
 
-        g_message ("Adding alarm: %ld", timestamp);
+        g_message ("Adding alarm: %ld", (long) timestamp);
 
         self->priv->alarms = g_list_insert_sorted (
             self->priv->alarms,
@@ -352,7 +352,7 @@ bim_bus_get_next_alarm (BimBus *self) {
     GFOREACH (self->priv->alarms, alarm) {
         g_variant_get (alarm, "(&sx)", NULL, &timestamp);
         if (timestamp > current_timestamp) {
-            g_message ("Next alarm: %ld", timestamp);
+            g_message ("Next alarm: %ld", (long) timestamp);
             return timestamp;
         }
     }

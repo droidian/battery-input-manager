@@ -171,7 +171,7 @@ has_alarm_pending (Suspend *self) {
 static gboolean
 handle_input_threshold_alarm (Suspend *self) {
     if (has_alarm_pending (self)) {
-        g_message ("Alarm pending: %ld", self->priv->next_alarm);
+        g_message ("Alarm pending: %ld", (long) self->priv->next_alarm);
         resume_input (self);
         return TRUE;
     }
@@ -195,7 +195,7 @@ handle_input (Suspend *self) {
     } else {
         if (!self->priv->suspend_lock) {
             if (has_alarm_pending (self)) {
-                g_message ("Alarm pending: %ld", self->priv->next_alarm);
+                g_message ("Alarm pending: %ld", (long) self->priv->next_alarm);
                 self->priv->suspend_lock = TRUE;
                 return;
             }
@@ -242,7 +242,7 @@ log_percentage (Suspend *self) {
             "%s: %d (%ld)",
             status,
             self->priv->percentage,
-            timestamp
+            (long) timestamp
         );
     } else {
         g_message (
@@ -270,7 +270,7 @@ handle_time_to_full (Suspend  *self,
             self->priv->time_to_full = MIN_TIME_TO_FULL;
         }
 
-        g_message("Time to full: %ld", self->priv->time_to_full);
+        g_message("Time to full: %ld", (long) self->priv->time_to_full);
     }
 }
 
