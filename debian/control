@@ -5,6 +5,9 @@ Maintainer: Cédric Bellegarde <cedric.bellegarde@adishatz.org>
 Rules-Requires-Root: no
 Build-Depends:
  debhelper-compat (= 13),
+ meson,
+ libglib2.0-dev,
+ libcjson-dev,
 Standards-Version: 4.6.2
 Homepage: https://gitlab.gnome.org/gnumdk/battery-input-manager
 #Vcs-Browser: https://gitlab.gnome.org/gnumdk/battery-input-manager
