@@ -401,8 +401,10 @@ suspend_connect_upower (Suspend *self) {
             &error
         );
 
-        if (self->priv->upower_proxy == NULL)
+        if (error != NULL) {
             g_error("Can't contact UPower: %s", error->message);
+            return;
+        }
 
         g_signal_connect (
             self->priv->upower_proxy,
