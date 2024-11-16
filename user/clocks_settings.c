@@ -51,11 +51,24 @@ on_keyfile_changed (GFileMonitor   *file_monitor,
                     GFile *file,
                     GFile *other_file,
                     GFileMonitorEvent event,
-                    gpointer     user_data) {
+                    gpointer     user_data)
+{
     ClocksSettings *self = CLOCKS_SETTINGS (user_data);
 
     if (event & G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT)
         g_signal_emit(self, signals[ALARMS_CHANGED], 0);
+}
+
+static void
+on_gsettings_changed (GSettings *g_settings,
+                      gchar     *key,
+                      gpointer   user_data)
+{
+    ClocksSettings *self = CLOCKS_SETTINGS (user_data);
+
+    if (g_strcmp0 (key, "alarms") == 0) {
+        g_signal_emit(self, signals[ALARMS_CHANGED], 0);
+    }
 }
 
 static void
@@ -109,6 +122,12 @@ clocks_settings_init (ClocksSettings *self)
 
     if (g_settings_schema_exist (CLOCKS_ID)) {
         self->priv->g_settings = g_settings_new (CLOCKS_ID);
+        g_signal_connect (
+            self->priv->g_settings,
+            "changed",
+            G_CALLBACK (on_gsettings_changed),
+            self
+        );
     } else {
         g_autoptr(GStrvBuilder) builder = g_strv_builder_new ();
         g_autoptr(GError) error = NULL;

@@ -42,8 +42,8 @@ struct _ClocksClass {
 };
 
 GType       clocks_get_type       (void) G_GNUC_CONST;
-Clocks     *clocks_get_default    (gboolean simulate);
-GObject*    clocks_new            (gboolean simulate);
+Clocks     *clocks_get_default    (void);
+GObject*    clocks_new            (void);
 void        clocks_update         (Clocks *self);
 
 G_END_DECLS

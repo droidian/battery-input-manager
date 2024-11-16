@@ -29,9 +29,7 @@ main (gint argc, gchar * argv[])
     g_autoptr (GOptionContext) context = NULL;
     g_autoptr (GError) error = NULL;
     gboolean version = FALSE;
-    gboolean simulate = FALSE;
     GOptionEntry main_entries[] = {
-        {"simulate", 0, 0, G_OPTION_ARG_NONE, &simulate, "Simulate alarms"},
         {"version", 0, 0, G_OPTION_ARG_NONE, &version, "Show version"},
         {NULL}
     };
@@ -57,7 +55,7 @@ main (gint argc, gchar * argv[])
 
     bim_bus_get_default ();
     settings_get_default ();
-    clocks_get_default (simulate);
+    clocks_get_default ();
 
     loop = g_main_loop_new (NULL, FALSE);
     g_main_loop_run (loop);

@@ -100,29 +100,6 @@ update_alarm (Clocks   *self,
 }
 
 static void
-add_fake_alarms (Clocks *self) {
-    g_autoptr(GDateTime) datetime;
-    gint64 timestamp;
-    GRand *rand = g_rand_new ();
-
-    datetime = g_date_time_new_now_utc ();
-    timestamp = g_date_time_to_unix (datetime);
-
-    bim_bus_add_alarm (
-        bim_bus_get_default (),
-        APP_ID,
-        timestamp + g_rand_int_range (rand, 30, 60)
-    );
-    bim_bus_add_alarm (
-        bim_bus_get_default (),
-        APP_ID,
-        timestamp + g_rand_int_range (rand, 80, 120)
-    );
-
-    g_free (rand);
-}
-
-static void
 on_alarms_changed (ClocksSettings   *settings,
                    gpointer     user_data) {
     Clocks *self = CLOCKS (user_data);
@@ -141,58 +118,6 @@ on_alarms_changed (ClocksSettings   *settings,
         g_variant_unref (alarm);
     }
     g_variant_unref (alarms);
-}
-
-static void
-clocks_connect_settings (Clocks *self) {
-    if (self->priv->simulate) {
-        add_fake_alarms (self);
-    } else {
-        g_signal_connect (
-            self->priv->settings,
-            "alarms-changed",
-            G_CALLBACK (on_alarms_changed),
-            self
-        );
-    }
-}
-
-static void
-clocks_set_property (GObject *object,
-                     guint property_id,
-                     const GValue *value,
-                     GParamSpec *pspec)
-{
-    Clocks *self = CLOCKS (object);
-
-    switch (property_id) {
-        case PROP_SIMULATE:
-            self->priv->simulate = g_value_get_boolean (value);
-            clocks_connect_settings (self);
-            return;
-        default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-            break;
-    }
-}
-
-static void
-clocks_get_property (GObject *object,
-                     guint property_id,
-                     GValue *value,
-                     GParamSpec *pspec)
-{
-    Clocks *self = CLOCKS (object);
-
-    switch (property_id) {
-        case PROP_SIMULATE:
-            g_value_set_boolean (
-                value, self->priv->simulate);
-            return;
-        default:
-            G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-            break;
-    }
 }
 
 static void
@@ -220,21 +145,6 @@ clocks_class_init (ClocksClass *klass)
     object_class = G_OBJECT_CLASS (klass);
     object_class->dispose = clocks_dispose;
     object_class->finalize = clocks_finalize;
-    object_class->set_property = clocks_set_property;
-    object_class->get_property = clocks_get_property;
-
-    g_object_class_install_property (
-        object_class,
-        PROP_SIMULATE,
-        g_param_spec_boolean (
-            "simulate",
-            "Simulate alarms",
-            "Simulate alarms",
-            FALSE,
-            G_PARAM_WRITABLE|
-            G_PARAM_CONSTRUCT_ONLY
-        )
-    );
 }
 
 static void
@@ -244,6 +154,13 @@ clocks_init (Clocks *self)
 
     self->priv->settings = CLOCKS_SETTINGS (clocks_settings_new ());
     self->priv->alarms = NULL;
+
+    g_signal_connect (
+        self->priv->settings,
+        "alarms-changed",
+        G_CALLBACK (on_alarms_changed),
+        self
+    );
 }
 
 /**
@@ -255,11 +172,11 @@ clocks_init (Clocks *self)
  *
  **/
 GObject *
-clocks_new (gboolean simulate)
+clocks_new (void)
 {
     GObject *clocks;
 
-    clocks = g_object_new (TYPE_CLOCKS, "simulate", simulate, NULL);
+    clocks = g_object_new (TYPE_CLOCKS, NULL);
 
     return clocks;
 }
@@ -273,10 +190,10 @@ static Clocks *default_clocks = NULL;
  * Return value: (transfer full): the default #Clocks.
  */
 Clocks *
-clocks_get_default (gboolean simulate)
+clocks_get_default (void)
 {
     if (!default_clocks) {
-        default_clocks = CLOCKS (clocks_new (simulate));
+        default_clocks = CLOCKS (clocks_new ());
     }
     return default_clocks;
 }
