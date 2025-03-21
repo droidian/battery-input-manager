@@ -50,7 +50,6 @@ struct _SuspendPrivate {
     guint handle_timeout_id;
 
     gboolean suspended;
-    gboolean suspend_lock;
 
     gboolean simulate;
 };
@@ -115,37 +114,6 @@ resume_input (Suspend *self) {
 }
 
 static gboolean
-handle_input_threshold_start (Suspend *self) {
-    if (self->priv->percentage <= self->priv->threshold_start) {
-        g_message ("Reached start threshold");
-        resume_input (self);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gboolean
-handle_input_threshold_end (Suspend *self) {
-    if (self->priv->percentage >= self->priv->threshold_end) {
-        g_message ("Reached end threshold");
-        suspend_input (self);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gboolean
-handle_input_threshold_max (Suspend *self) {
-    if (self->priv->percentage >= self->priv->threshold_max) {
-        g_message ("Reached max threshold");
-        suspend_input (self);
-        self->priv->next_alarm = 0;
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static gboolean
 has_alarm_pending (Suspend *self) {
     if (self->priv->next_alarm != 0 &&
             self->priv->time_to_full != 0) {
@@ -168,6 +136,39 @@ has_alarm_pending (Suspend *self) {
     }
     return FALSE;
 }
+
+static gboolean
+handle_input_threshold_start (Suspend *self) {
+    if (self->priv->percentage <= self->priv->threshold_start) {
+        g_message ("Reached start threshold");
+        resume_input (self);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean
+handle_input_threshold_end (Suspend *self) {
+    if (self->priv->percentage >= self->priv->threshold_end &&
+            !has_alarm_pending (self)) {
+        g_message ("Reached end threshold");
+        suspend_input (self);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static gboolean
+handle_input_threshold_max (Suspend *self) {
+    if (self->priv->percentage >= self->priv->threshold_max) {
+        g_message ("Reached max threshold");
+        suspend_input (self);
+        self->priv->next_alarm = 0;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static gboolean
 handle_input_threshold_alarm (Suspend *self) {
     if (has_alarm_pending (self)) {
@@ -181,27 +182,11 @@ handle_input_threshold_alarm (Suspend *self) {
 static void
 handle_input (Suspend *self) {
     if (self->priv->suspended) {
-        if (handle_input_threshold_start (self)) {
-            self->priv->suspend_lock = FALSE;
-            self->priv->next_alarm = bim_bus_get_next_alarm (
-                bim_bus_get_default ()
-            );
-            return;
+        if (!handle_input_threshold_start (self)) {
+            handle_input_threshold_alarm (self);
         }
-        if (handle_input_threshold_alarm (self)) {
-            self->priv->suspend_lock = TRUE;
-            return;
-        }
-    } else {
-        if (!self->priv->suspend_lock) {
-            if (has_alarm_pending (self)) {
-                g_message ("Alarm pending: %ld", (long) self->priv->next_alarm);
-                self->priv->suspend_lock = TRUE;
-                return;
-            }
-            if (handle_input_threshold_end (self))
-                return;
-        }
+    } else if (has_alarm_pending (self) ||
+            !handle_input_threshold_end (self)) {
         handle_input_threshold_max (self);
     }
 }
@@ -507,9 +492,7 @@ suspend_init (Suspend *self)
     self->priv->previous_percentage = 0;
 
     self->priv->suspended = FALSE;
-    self->priv->suspend_lock = FALSE;
 
-    self->priv->next_alarm = 0;
     self->priv->time_to_full = 0;
     self->priv->previous_time_to_full = 0;
 
@@ -517,6 +500,9 @@ suspend_init (Suspend *self)
     self->priv->threshold_start = INPUT_THRESHOLD_START;
     self->priv->threshold_end = INPUT_THRESHOLD_END;
 
+    self->priv->next_alarm = bim_bus_get_next_alarm (
+        bim_bus_get_default ()
+    );
     g_signal_connect (
         bim_bus_get_default (),
         "alarm-added",
